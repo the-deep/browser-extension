@@ -2,8 +2,6 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { FgRestBuilder } from './vendor/react-store/utils/rest';
-
 import AddLead from './views/AddLead';
 import Settings from './views/Settings';
 
@@ -12,15 +10,15 @@ import {
     setCurrentTabInfoAction,
     tokenSelector,
     serverAddressSelector,
-} from './common/redux';
+} from './redux';
 
 import AccentButton from './vendor/react-store/components/Action/Button/AccentButton';
 
 import {
-    createUrlForTokenRefresh,
-    createParamsForTokenRefresh,
     createUrlForBrowserExtensionPage,
-} from './common/rest';
+} from './rest/web.js';
+
+import TokenRefresh from './requests/TokenRefresh.js';
 
 const mapStateToProps = state => ({
     token: tokenSelector(state),
@@ -45,19 +43,6 @@ const propTypes = {
 const defaultProps = {
 };
 
-// TODO: Move this to utils
-export const transformResponseErrorToFormError = (errors) => {
-    const { nonFieldErrors: formErrors = [], ...formFieldErrorList } = errors;
-
-    const formFieldErrors = Object.keys(formFieldErrorList).reduce(
-        (acc, key) => {
-            acc[key] = formFieldErrorList[key].join(' ');
-            return acc;
-        },
-        {},
-    );
-    return { formFieldErrors, formErrors };
-};
 
 // TODO: Move this to utils
 const getWebsiteFromUrl = (url) => {
@@ -67,7 +52,6 @@ const getWebsiteFromUrl = (url) => {
     const website = `${protocol}//${host}`;
     return website;
 };
-
 
 const ADD_LEAD_VIEW = 'add-lead';
 const SETTINGS_VIEW = 'settings-view';
@@ -81,11 +65,16 @@ class App extends React.PureComponent {
         super(props);
 
         this.state = {
-            pending: false,
+            pendingTokenRefresh: false,
+            pendingTabInfo: false,
             authenticated: false,
             errorMessage: undefined,
             currentView: ADD_LEAD_VIEW,
         };
+
+        this.tokenRefresh = new TokenRefresh({
+            setState: d => d.setState(d),
+        });
     }
 
     componentWillMount() {
@@ -111,8 +100,10 @@ class App extends React.PureComponent {
 
             if (newToken.refresh !== oldToken.refresh) {
                 if (newToken.refresh) {
-                    this.tokenRefreshRequest = this.createRequestForTokenRefresh(newToken);
-                    this.tokenRefreshRequest.start();
+                    this.tokenRefresh.request.create(newToken);
+                    this.tokenRefresh.request.start();
+                    // this.tokenRefreshRequest = this.createRequestForTokenRefresh(newToken);
+                    // this.tokenRefreshRequest.start();
                 } else {
                     this.setState({ authenticated: false });
                 }
@@ -121,9 +112,7 @@ class App extends React.PureComponent {
     }
 
     componentWillUnmount() {
-        if (this.tokenRefreshRequest) {
-            this.tokenRefreshRequest.stop();
-        }
+        this.tokenRefresh.request.stop();
         chrome.runtime.onMessage.removeListener(this.handleMessageReceive);
     }
 
@@ -143,8 +132,10 @@ class App extends React.PureComponent {
             const { setCurrentTabInfo } = this.props;
 
             const tab = tabs[0];
-            const url = tab.url;
-            const tabId = tab.url;
+            const {
+                url,
+                url: tabId,
+            } = tab;
 
             setCurrentTabInfo({
                 tabId,
@@ -157,53 +148,6 @@ class App extends React.PureComponent {
         chrome.tabs.query(queryInfo, queryCallback);
     }
 
-    createRequestForTokenRefresh = (token) => {
-        const tokenRefreshRequest = new FgRestBuilder()
-            .url(createUrlForTokenRefresh())
-            .params(() => createParamsForTokenRefresh(token))
-            .preLoad(() => {
-                this.setState({
-                    pending: true,
-                });
-            })
-            .success((response) => {
-                const { setToken } = this.props;
-
-                const params = {
-                    token: {
-                        ...token,
-                        access: response.access,
-                    },
-                };
-
-                setToken(params);
-                this.setState({
-                    pending: false,
-                    errorMessage: undefined,
-                    authenticated: true,
-                });
-            })
-            .failure((response) => {
-                console.error(response);
-                const { formErrors } = transformResponseErrorToFormError(response);
-                this.setState({
-                    pending: false,
-                    errorMessage: formErrors.join(', '),
-                    authenticated: false,
-                });
-            })
-            .fatal((response) => {
-                console.error(response);
-                this.setState({
-                    pending: false,
-                    error: 'Oops, something went wrong',
-                    authenticated: false,
-                });
-            })
-            .build();
-        return tokenRefreshRequest;
-    }
-
     handleGetTokenMessageResponse = (response = {}) => {
         const token = response;
         const { setToken } = this.props;
@@ -212,8 +156,8 @@ class App extends React.PureComponent {
 
         if (token && token.refresh) {
             console.info('Got token from bg', token);
-            this.tokenRefreshRequest = this.createRequestForTokenRefresh(token);
-            this.tokenRefreshRequest.start();
+            this.tokenRefresh.request.create(token);
+            this.tokenRefresh.request.start();
         } else {
             this.setState({
                 authenticated: false,
@@ -288,11 +232,14 @@ class App extends React.PureComponent {
 
     render() {
         const {
-            pending,
+            pendingTokenRefresh,
+            pendingTabInfo,
             authenticated,
             currentView,
             errorMessage,
         } = this.state;
+
+        const pending = pendingTabInfo || pendingTokenRefresh;
 
         const Message = this.renderMessage;
 

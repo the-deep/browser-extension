@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { persistStore } from 'redux-persist';
 
 import App from './App';
-import store from './common/store';
+import store from './store';
 
 export default class Root extends React.PureComponent {
     constructor(props) {
