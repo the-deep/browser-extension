@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const getEnvVariables = require('./env.js');
 
@@ -27,6 +28,7 @@ module.exports = (env) => {
         },
 
         mode: 'development',
+        devtool: 'cheap-module-source-map',
         performance: {
             hints: 'warning',
         },
@@ -37,15 +39,9 @@ module.exports = (env) => {
             errorDetails: true,
             hash: true,
         },
-        devtool: 'cheap-module-eval-source-map',
-
-        devServer: {
-            host: '0.0.0.0',
-            port: 3000,
-            overlay: true,
-            watchOptions: {
-                ignored: /node_modules/,
-            },
+        watch: true,
+        watchOptions: {
+            ignored: '/node_modules/',
         },
 
         module: {
@@ -70,6 +66,8 @@ module.exports = (env) => {
                                 modules: true,
                                 camelCase: true,
                                 localIdentName: '[name]_[local]_[hash:base64]',
+                                minimize: true,
+                                sourceMap: true,
                             },
                         },
                         require.resolve('sass-loader'),
@@ -105,9 +103,12 @@ module.exports = (env) => {
                 chunksSortMode: 'none',
             }),
             new MiniCssExtractPlugin({
-                filename: 'css/[name].css',
-                chunkFilename: 'css/[id].css',
+                filename: 'css/[name].[hash].css',
+                chunkFilename: 'css/[id].[hash].css',
             }),
+            new CopyWebpackPlugin([
+                { from: 'assets', to: '.' },
+            ]),
         ],
     };
 };

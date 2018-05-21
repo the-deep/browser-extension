@@ -16,9 +16,6 @@ const appDist = path.resolve(appBase, 'build/');
 const appIndexJs = path.resolve(appBase, 'src/index.js');
 const appIndexHtml = path.resolve(appBase, 'public/index.html');
 
-const appBackgroundJs = path.resolve(appBase, 'public/background.js');
-const appManifestJson = path.resolve(appBase, 'public/manifest.json');
-
 module.exports = (env) => {
     const ENV_VARS = getEnvVariables(env);
 
