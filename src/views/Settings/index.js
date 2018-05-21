@@ -3,25 +3,27 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import TextInput from '../../vendor/react-store/components/Input/TextInput';
+import SelectInput from '../../vendor/react-store/components/Input/SelectInput';
 import Faram, {
     requiredCondition,
     urlCondition,
 } from '../../vendor/react-store/components/Input/Faram';
 
-import AccentButton from '../../vendor/react-store/components/Action/Button/AccentButton';
 import PrimaryButton from '../../vendor/react-store/components/Action/Button/PrimaryButton';
 
 import {
     setSettingsAction,
-    serverAddressSelector,
-    apiAddressSelector,
+    webServerAddressSelector,
+    apiServerAddressSelector,
+    serverSelector,
 } from '../../redux';
 
 import styles from './styles.scss';
 
 const mapStateToProps = state => ({
-    serverAddress: serverAddressSelector(state),
-    apiAddress: apiAddressSelector(state),
+    webServerAddress: webServerAddressSelector(state),
+    apiServerAddress: apiServerAddressSelector(state),
+    server: serverSelector(state),
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -29,14 +31,22 @@ const mapDispatchToProps = dispatch => ({
 });
 
 const propTypes = {
-    serverAddress: PropTypes.string.isRequired,
-    apiAddress: PropTypes.string.isRequired,
-    onBackButtonClick: PropTypes.func.isRequired,
+    webServerAddress: PropTypes.string.isRequired,
+    apiServerAddress: PropTypes.string.isRequired,
     setSettings: PropTypes.func.isRequired,
+    server: PropTypes.string.isRequired,
 };
 
 const defaultProps = {
 };
+
+const saveButtonLabel = 'Save';
+const serverSelectInputTitle = 'Server';
+const serverSelectInputPlaceholder = 'Select a server';
+const webServerAddressTitle = 'Web server address';
+const webServerAddressInputPlaceholder = 'eg: https://thedeep.io';
+const apiServerAddressTitle = 'API server address';
+const apiServerAddressInputPlaceholder = 'eg: https://api.thedeep.io';
 
 @connect(mapStateToProps, mapDispatchToProps)
 export default class Settings extends React.PureComponent {
@@ -46,31 +56,83 @@ export default class Settings extends React.PureComponent {
     constructor(props) {
         super(props);
 
+        console.warn('constructor', props);
         this.state = {
             inputValues: {
-                serverAddress: props.serverAddress,
-                apiAddress: props.apiAddress,
+                server: props.server,
+                webServerAddress: props.webServerAddress,
+                apiServerAddress: props.apiServerAddress,
             },
             faramErrors: {},
         };
 
         this.schema = {
             fields: {
-                serverAddress: [requiredCondition, urlCondition],
-                apiAddress: [requiredCondition, urlCondition],
+                server: [requiredCondition],
+                webServerAddress: [requiredCondition, urlCondition],
+                apiServerAddress: [requiredCondition, urlCondition],
+            },
+        };
+
+        this.serverOptions = [
+            {
+                id: 'beta',
+                title: 'Beta',
+            },
+            {
+                id: 'alpha',
+                title: 'Alpha',
+            },
+            {
+                id: 'custom',
+                title: 'Custom',
+            },
+        ];
+
+        this.serverAddresses = {
+            beta: {
+                web: 'https://beta.thedeep.io',
+                api: 'https://api.thedeep.io',
+            },
+            alpha: {
+                web: 'https://deeper.togglecorp.com',
+                api: 'https://api.deeper.togglecorp.com',
+            },
+            custom: {
+                web: '',
+                api: '',
             },
         };
     }
 
     componentWillReceiveProps(nextProps) {
-        // FIXME: add checks
-        this.setState({
-            inputValues: {
-                serverAddress: nextProps.serverAddress,
-                apiAddress: nextProps.apiAddress,
-            },
-            faramErrors: {},
-        });
+        console.warn('cwrp', nextProps);
+
+        const {
+            server: newServer,
+            webServerAddress: newWebServerAddress,
+            apiServerAddress: newApiServerAddress,
+        } = nextProps;
+
+        const {
+            server: oldServer,
+            webServerAddress: oldWebServerAddress,
+            apiServerAddress: oldApiServerAddress,
+        } = this.props;
+
+        if (newServer !== oldServer
+            || newWebServerAddress !== oldWebServerAddress
+            || newApiServerAddress !== oldApiServerAddress
+        ) {
+            this.setState({
+                inputValues: {
+                    server: nextProps.server,
+                    webServerAddress: nextProps.webServerAddress,
+                    apiServerAddress: nextProps.apiServerAddress,
+                },
+                faramErrors: {},
+            });
+        }
     }
 
     componentWillUnmount() {
@@ -97,9 +159,15 @@ export default class Settings extends React.PureComponent {
     // FORM
 
     handleFormChange = (value, faramErrors) => {
+        const newValues = { ...value };
+
+        const serverAddress = this.serverAddresses[newValues.server];
+        newValues.webServerAddress = serverAddress.web;
+        newValues.apiServerAddress = serverAddress.api;
+
         this.setState({
             faramErrors,
-            inputValues: value,
+            inputValues: newValues,
         });
     }
 
@@ -114,12 +182,13 @@ export default class Settings extends React.PureComponent {
     }
 
     render() {
-        const { onBackButtonClick } = this.props;
         const {
             inputValues,
             faramErrors,
             saveStatus,
         } = this.state;
+
+        const isCustomInput = inputValues.server === 'custom';
 
         return (
             <div className={styles.settings}>
@@ -131,27 +200,30 @@ export default class Settings extends React.PureComponent {
                     error={faramErrors}
                     value={inputValues}
                 >
-                    <header className={styles.header}>
-                        <h1>
-                            Settings
-                        </h1>
-                        <AccentButton
-                            transparent
-                            onClick={onBackButtonClick}
-                        >
-                            Back
-                        </AccentButton>
-                    </header>
-                    <div className={styles.content}>
-                        <TextInput
-                            faramElementName="serverAddress"
-                            label="Server address"
-                            placeholder="eg: https://thedeep.io"
+                    <div className={styles.inputs}>
+                        <SelectInput
+                            className={styles.input}
+                            label={serverSelectInputTitle}
+                            placeholder={serverSelectInputPlaceholder}
+                            faramElementName="server"
+                            options={this.serverOptions}
+                            hideClearButton
+                            keySelector={d => d.id}
+                            labelSelector={d => d.title}
                         />
                         <TextInput
-                            faramElementName="apiAddress"
-                            label="Api address"
-                            placeholder="eg: https://api.thedeep.io"
+                            className={styles.input}
+                            faramElementName="webServerAddress"
+                            label={webServerAddressTitle}
+                            placeholder={webServerAddressInputPlaceholder}
+                            disabled={!isCustomInput}
+                        />
+                        <TextInput
+                            className={styles.input}
+                            faramElementName="apiServerAddress"
+                            label={apiServerAddressTitle}
+                            placeholder={apiServerAddressInputPlaceholder}
+                            disabled={!isCustomInput}
                         />
                     </div>
                     <footer className={styles.footer}>
@@ -159,7 +231,7 @@ export default class Settings extends React.PureComponent {
                             { saveStatus }
                         </div>
                         <PrimaryButton type="submit">
-                            Save
+                            { saveButtonLabel }
                         </PrimaryButton>
                     </footer>
                 </Faram>

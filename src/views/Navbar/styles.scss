@@ -1,0 +1,13 @@
+@import '../../stylesheets/base';
+
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-small $spacing-medium;
+
+    .title {
+        padding: 0 $spacing-small;
+        font-weight: $font-weight-light;
+    }
+}

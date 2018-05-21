@@ -1,6 +1,7 @@
 import update from '../../vendor/react-store/utils/immutable-update';
 import createReducerWithMap from '../../utils/createReducerWithMap';
 import initialSettingsState from '../initial-state/settings';
+import { getWebsiteFromUrl } from '../../utils/url';
 
 // TYPE
 
@@ -18,13 +19,15 @@ export const setSettingsAction = ({ serverAddress, apiAddress }) => ({
 
 const setSettings = (state, action) => {
     const {
-        serverAddress,
-        apiAddress,
+        webServerAddress,
+        apiServerAddress,
+        server,
     } = action;
 
     const settings = {
-        serverAddress: { $set: serverAddress },
-        apiAddress: { $set: apiAddress },
+        webServerAddress: { $set: getWebsiteFromUrl(apiServerAddress) },
+        apiServerAddress: { $set: getWebsiteFromUrl(webServerAddress) },
+        server: { $set: server },
     };
 
     const newState = update(state, settings);

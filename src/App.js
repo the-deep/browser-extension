@@ -1,9 +1,10 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
-
+import MultiViewContainer from './vendor/react-store/components/View/MultiViewContainer';
 import AddLead from './views/AddLead';
 import Settings from './views/Settings';
+import Navbar from './views/Navbar';
 
 import {
     setTokenAction,
@@ -17,6 +18,10 @@ import AccentButton from './vendor/react-store/components/Action/Button/AccentBu
 import {
     createUrlForBrowserExtensionPage,
 } from './rest/web.js';
+
+import {
+    getWebsiteFromUrl,
+} from './utils/url';
 
 import TokenRefresh from './requests/TokenRefresh.js';
 
@@ -43,18 +48,27 @@ const propTypes = {
 const defaultProps = {
 };
 
-
-// TODO: Move this to utils
-const getWebsiteFromUrl = (url) => {
-    const pathArray = url.split('/');
-    const protocol = pathArray[0];
-    const host = pathArray[2];
-    const website = `${protocol}//${host}`;
-    return website;
-};
-
 const ADD_LEAD_VIEW = 'add-lead';
 const SETTINGS_VIEW = 'settings-view';
+
+const currentTabQueryInfo = {
+    active: true,
+    currentWindow: true,
+};
+
+const EXTENSION_GET_TOKEN_MESSAGE = 'get-token';
+const EXTENSION_SET_TOKEN_FG_MESSAGE = 'set-token-fg';
+
+const notAuthenticatedMessage = 'You need to login to deep first';
+const ErrorMessage = (p) => {
+    const { children } = p;
+
+    return (
+        <div className="error-message">
+            { children }
+        </div>
+    );
+};
 
 @connect(mapStateToProps, mapDispatchToProps)
 class App extends React.PureComponent {
@@ -70,16 +84,37 @@ class App extends React.PureComponent {
             authenticated: false,
             errorMessage: undefined,
             currentView: ADD_LEAD_VIEW,
+            activeView: 'addLead',
         };
 
         this.tokenRefresh = new TokenRefresh({
             setState: d => d.setState(d),
         });
+
+        this.views = {
+            addLead: {
+                component: () => {
+                    const { authenticated } = this.state;
+                    if (authenticated) {
+                        return <AddLead />;
+                    }
+
+                    return (
+                        <ErrorMessage>
+                            { notAuthenticatedMessage }
+                        </ErrorMessage>
+                    );
+                },
+            },
+
+            settings: {
+                component: Settings,
+            },
+        };
     }
 
     componentWillMount() {
         chrome.runtime.onMessage.addListener(this.handleMessageReceive);
-
         this.getCurrentTabInfo();
 
         const { serverAddress } = this.props;
@@ -100,10 +135,8 @@ class App extends React.PureComponent {
 
             if (newToken.refresh !== oldToken.refresh) {
                 if (newToken.refresh) {
-                    this.tokenRefresh.request.create(newToken);
+                    this.tokenRefresh.create(newToken);
                     this.tokenRefresh.request.start();
-                    // this.tokenRefreshRequest = this.createRequestForTokenRefresh(newToken);
-                    // this.tokenRefreshRequest.start();
                 } else {
                     this.setState({ authenticated: false });
                 }
@@ -117,17 +150,15 @@ class App extends React.PureComponent {
     }
 
     getTokenFromBackground = (serverAddress) => {
-        const EXTENSION_GET_TOKEN = 'get-token';
+        const webServerAddress = getWebsiteFromUrl(serverAddress.web);
 
-        const serverWebsite = getWebsiteFromUrl(serverAddress);
         chrome.runtime.sendMessage({
-            message: EXTENSION_GET_TOKEN,
-            website: serverWebsite,
+            message: EXTENSION_GET_TOKEN_MESSAGE,
+            website: webServerAddress,
         }, this.handleGetTokenMessageResponse);
     }
 
     getCurrentTabInfo = () => {
-        const queryInfo = { active: true, currentWindow: true };
         const queryCallback = (tabs) => {
             const { setCurrentTabInfo } = this.props;
 
@@ -145,7 +176,7 @@ class App extends React.PureComponent {
             this.setState({ pendingTabInfo: false });
         };
 
-        chrome.tabs.query(queryInfo, queryCallback);
+        chrome.tabs.query(currentTabQueryInfo, queryCallback);
     }
 
     handleGetTokenMessageResponse = (response = {}) => {
@@ -156,7 +187,7 @@ class App extends React.PureComponent {
 
         if (token && token.refresh) {
             console.info('Got token from bg', token);
-            this.tokenRefresh.request.create(token);
+            this.tokenRefresh.create(token);
             this.tokenRefresh.request.start();
         } else {
             this.setState({
@@ -171,17 +202,16 @@ class App extends React.PureComponent {
     }
 
     handleMessageReceive = (request, sender) => {
-        const EXTENSION_SET_TOKEN_FG = 'set-token-fg';
-
         if (chrome.runtime.id === sender.id) {
-            if (request.message === EXTENSION_SET_TOKEN_FG) {
+            if (request.message === EXTENSION_SET_TOKEN_FG_MESSAGE) {
                 const {
                     setToken,
                     serverAddress,
                 } = this.props;
 
-                const serverWebsite = getWebsiteFromUrl(serverAddress);
-                if (request.sender === serverWebsite) {
+                const website = getWebsiteFromUrl(serverAddress.web);
+
+                if (request.sender === website) {
                     console.info('Got token from site', request.token);
                     setToken({ token: request.token });
                 }
@@ -196,38 +226,38 @@ class App extends React.PureComponent {
     }
 
     handleSettingsButtonClick = () => {
-        this.setState({
-            currentView: SETTINGS_VIEW,
-        });
+        this.setState({ activeView: 'settings' });
     }
 
-    handleSettingsBackButtonClick = () => {
-        this.setState({
-            currentView: ADD_LEAD_VIEW,
-        });
+    handleBackButtonClick = () => {
+        this.setState({ activeView: 'addLead' });
     }
 
-    renderMessage = (p) => {
-        const style = {
-            height: '560px',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-        };
+    renderNavbarRightComponent = () => {
+        const { activeView } = this.state;
 
-        return (
-            <div style={style}>
-                <p>{p.message}</p>
-                <AccentButton
-                    transparent
-                    onClick={this.handleSettingsButtonClick}
-                >
-                    Settings
-                </AccentButton>
-            </div>
-        );
+        switch (activeView) {
+            case 'addLead':
+                return (
+                    <AccentButton
+                        transparent
+                        onClick={this.handleSettingsButtonClick}
+                    >
+                        Settings
+                    </AccentButton>
+                );
+            case 'settings':
+                return (
+                    <AccentButton
+                        transparent
+                        onClick={this.handleBackButtonClick}
+                    >
+                        Back
+                    </AccentButton>
+                );
+            default:
+                return null;
+        }
     }
 
     render() {
@@ -236,13 +266,25 @@ class App extends React.PureComponent {
             pendingTabInfo,
             authenticated,
             currentView,
+            activeView,
             errorMessage,
         } = this.state;
 
         const pending = pendingTabInfo || pendingTokenRefresh;
-
         const Message = this.renderMessage;
+        const NavbarRightComponent = this.renderNavbarRightComponent;
 
+        return (
+            <React.Fragment>
+                <Navbar rightComponent={NavbarRightComponent} />
+                <MultiViewContainer
+                    views={this.views}
+                    active={activeView}
+                />
+            </React.Fragment>
+        );
+
+        /*
         if (currentView === SETTINGS_VIEW) {
             return (
                 <Settings
@@ -268,6 +310,7 @@ class App extends React.PureComponent {
                 <Message message="You need to login to deep first" />
             )
         );
+        */
     }
 }
 

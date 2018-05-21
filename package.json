@@ -47,6 +47,8 @@
         "node-sass": "4.7.2",
         "optimize-css-assets-webpack-plugin": "^4.0.1",
         "react-test-renderer": "^16.3.2",
+        "remote-redux-devtools": "^0.5.12",
+        "remotedev-server": "^0.2.4",
         "sass-loader": "^7.0.1",
         "style-loader": "^0.21.0",
         "stylelint": "^9.2.0",
@@ -73,6 +75,7 @@
         "react-redux": "^5.0.6",
         "redux": "^3.7.2",
         "redux-persist": "^5.4.0",
-        "reselect": "^3.0.1"
+        "reselect": "^3.0.1",
+        "uws": "^10.148.0"
     }
 }
