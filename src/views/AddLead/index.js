@@ -10,7 +10,6 @@ import Faram, {
 import MultiSelectInput from '../../vendor/react-store/components/Input/MultiSelectInput';
 import SelectInput from '../../vendor/react-store/components/Input/SelectInput';
 import TextInput from '../../vendor/react-store/components/Input/TextInput';
-import AccentButton from '../../vendor/react-store/components/Action/Button/AccentButton';
 import PrimaryButton from '../../vendor/react-store/components/Action/Button/PrimaryButton';
 import LoadingAnimation from '../../vendor/react-store/components/View/LoadingAnimation';
 
@@ -30,13 +29,17 @@ import {
     projectListSelector,
     setLeadOptionsAction,
     leadOptionsSelector,
-    serverAddressSelector,
+    webServerAddressSelector,
 } from '../../redux';
-
 
 import styles from './styles.scss';
 
 const emptyObject = {};
+
+const keySelector = d => (d || {}).key;
+const labelSelector = d => (d || {}).value;
+const projectKeySelector = d => (d || {}).id;
+const projectLabelSelector = d => (d || {}).title;
 
 const mapStateToProps = state => ({
     uiState: uiStateForTabSelector(state),
@@ -45,7 +48,7 @@ const mapStateToProps = state => ({
     projects: projectListSelector(state),
     leadOptions: leadOptionsSelector(state),
     currentUserId: currentUserIdSelector(state),
-    serverAddress: serverAddressSelector(state),
+    webServerAddress: webServerAddressSelector(state),
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -60,14 +63,13 @@ const propTypes = {
     inputValues: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
     currentTabId: PropTypes.string.isRequired,
     projects: PropTypes.arrayOf(PropTypes.object).isRequired,
-    leadOptions: PropTypes.arrayOf(PropTypes.object).isRequired,
+    leadOptions: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types,
     updateInputValues: PropTypes.func.isRequired,
     clearInputValue: PropTypes.func.isRequired,
     setProjectList: PropTypes.func.isRequired,
     setLeadOptions: PropTypes.func.isRequired,
-    onSettingsButtonClick: PropTypes.func.isRequired,
     currentUserId: PropTypes.number,
-    serverAddress: PropTypes.string.isRequired,
+    webServerAddress: PropTypes.string.isRequired,
 };
 
 const defaultProps = {
@@ -75,6 +77,21 @@ const defaultProps = {
 };
 
 const renderEmpty = () => 'Select a project for available option(s)';
+const leadSubmitFailureMessage = 'Failed to save the lead';
+const leadSubmitSuccessMessage = 'Lead submitted successfully';
+const addEntryButtonTitle = 'Add entry';
+const submitButtonTitle = 'submit';
+const websiteInputLabel = 'Website';
+const urlInputLabel = 'Url';
+const publishedOnInputLabel = 'Published on';
+const assigneeInputLabel = 'Assignee';
+const confidentialityInputLabel = 'Confidentiality';
+const sourceInputLabel = 'Publisher';
+const titleInputLabel = 'Title';
+const projectInputLabel = 'Project';
+
+const checkmarkIcon = 'ion-ios-checkmark-outline';
+const closeIcon = 'ion-ios-close-outline';
 
 @connect(mapStateToProps, mapDispatchToProps)
 export default class AddLead extends React.PureComponent {
@@ -88,6 +105,8 @@ export default class AddLead extends React.PureComponent {
             pendingProjectList: false,
             pendingLeadOptions: false,
             pendingWebInfo: false,
+            pendingLeadCreate: false,
+
             leadSubmittedSuccessfully: undefined,
             submittedLeadId: undefined,
             submittedProjectId: undefined,
@@ -119,6 +138,7 @@ export default class AddLead extends React.PureComponent {
         this.leadOptions = new LeadOptions({
             setState,
             setLeadOptions: this.props.setLeadOptions,
+            fillExtraInfo: this.fillExtraInfo,
         });
 
         this.projectList = new ProjectList({
@@ -129,13 +149,12 @@ export default class AddLead extends React.PureComponent {
         this.leadCreate = new LeadCreate({
             setState,
             clearInputValue: this.props.clearInputValue,
-            setLeadCreate: () => {},
         });
     }
 
     componentWillMount() {
-        this.projectListRequest = this.createRequestForProjectList();
-        this.projectListRequest.start();
+        this.projectList.create();
+        this.projectList.request.start();
 
         // NOTE: load leadoptions just in case
         this.requestForLeadOptions(this.props.inputValues.project);
@@ -164,7 +183,8 @@ export default class AddLead extends React.PureComponent {
     }
 
     requestForWebInfo = (url) => {
-        this.webInfoRequest.stop();
+        this.webInfo.request.stop();
+
         if (url && url.length > 0) {
             this.webInfo.create(url);
             this.webInfo.request.start();
@@ -175,7 +195,8 @@ export default class AddLead extends React.PureComponent {
         this.leadOptions.request.stop();
 
         if (!project || project.length <= 0) {
-            this.props.setLeadOptions({ leadOptions: {} });
+            const { setLeadOptions } = this.props;
+            setLeadOptions({ leadOptions: emptyObject });
             return;
         }
 
@@ -189,15 +210,14 @@ export default class AddLead extends React.PureComponent {
             inputValues,
             updateInputValues,
             currentUserId,
-            leadOptions = {},
+            leadOptions = emptyObject,
+            uiState,
         } = this.props;
 
         const values = {};
-
         if (!inputValues.assignee || (inputValues.assignee || []).length === 0) {
             values.assignee = [currentUserId];
         }
-
         if (!inputValues.confidentiality) {
             values.confidentiality = ((leadOptions.confidentiality || [])[0] || {}).key;
         }
@@ -207,9 +227,15 @@ export default class AddLead extends React.PureComponent {
             ...values,
         };
 
+        const newUiState = {
+            ...uiState,
+            pristine: false,
+        };
+
         updateInputValues({
             tabId: currentTabId,
             values: newValues,
+            uiState: newUiState,
         });
     }
 
@@ -218,6 +244,7 @@ export default class AddLead extends React.PureComponent {
             currentTabId,
             inputValues,
             updateInputValues,
+            uiState,
         } = this.props;
 
         const values = {};
@@ -246,9 +273,15 @@ export default class AddLead extends React.PureComponent {
             ...values,
         };
 
+        const newUiState = {
+            ...uiState,
+            pristine: false,
+        };
+
         updateInputValues({
             tabId: currentTabId,
             values: newValues,
+            newUiState,
         });
     }
 
@@ -269,12 +302,9 @@ export default class AddLead extends React.PureComponent {
     }
 
     handleFaramValidationSuccess = (values) => {
-        if (this.leadSaveRequest) {
-            this.leadSaveRequest.stop();
-        }
-
-        this.leadSaveRequest = this.createRequestForLeadCreate(values);
-        this.leadSaveRequest.start();
+        this.leadCreate.request.stop();
+        this.leadCreate.create(values);
+        this.leadCreate.request.start();
     }
 
     handleFaramChange = (values, faramErrors) => {
@@ -295,6 +325,41 @@ export default class AddLead extends React.PureComponent {
         });
     }
 
+    renderSuccessMessage = () => {
+        const {
+            submittedLeadId,
+            submittedProjectId,
+        } = this.state;
+
+        const { webServerAddress } = this.props;
+        const targetUrl = `${webServerAddress}/projects/${submittedProjectId}/leads/${submittedLeadId}/edit-entries/`;
+
+        return (
+            <div className={styles.submitSuccess}>
+                <div className={`${styles.icon} ${checkmarkIcon}`} />
+                <div className={styles.message}>
+                    { leadSubmitSuccessMessage }
+                </div>
+                <a
+                    target="_blank"
+                    className={styles.addEntryLink}
+                    href={targetUrl}
+                >
+                    { addEntryButtonTitle }
+                </a>
+            </div>
+        );
+    }
+
+    renderFailureMessage = () => (
+        <div className={styles.submitFailure}>
+            <div className={`${styles.icon} ${closeIcon}`} />
+            <div className={styles.message}>
+                { leadSubmitFailureMessage }
+            </div>
+        </div>
+    )
+
     render() {
         const {
             inputValues,
@@ -304,8 +369,6 @@ export default class AddLead extends React.PureComponent {
                 assignee = [],
                 confidentiality = [],
             },
-            onSettingsButtonClick,
-            serverAddress,
         } = this.props;
         const { faramErrors = emptyObject } = uiState;
         const {
@@ -314,33 +377,17 @@ export default class AddLead extends React.PureComponent {
             pendingWebInfo,
             pendingLeadCreate,
             leadSubmittedSuccessfully,
-            submittedLeadId,
-            submittedProjectId,
         } = this.state;
 
+        const SuccessMessage = this.renderSuccessMessage;
+        const FailureMessage = this.renderFailureMessage;
+
         if (leadSubmittedSuccessfully === true) {
-            return (
-                <div className={styles.submitSuccess}>
-                    <p>Lead submitted successfully</p>
-                    {
-                        submittedLeadId && (
-                            <a
-                                target="_blank"
-                                className={styles.addEntryLink}
-                                href={`${serverAddress}/projects/${submittedProjectId}/leads/${submittedLeadId}/edit-entries/`}
-                            >
-                                Add entry
-                            </a>
-                        )
-                    }
-                </div>
-            );
-        } else if (leadSubmittedSuccessfully === false) {
-            return (
-                <div className={styles.submitFailure}>
-                    An error occured while submitting the lead
-                </div>
-            );
+            return <SuccessMessage />;
+        }
+
+        if (leadSubmittedSuccessfully === false) {
+            return <FailureMessage />;
         }
 
         const pending = pendingProjectList
@@ -351,26 +398,10 @@ export default class AddLead extends React.PureComponent {
         return (
             <div className={styles.addLead}>
                 { pending && <LoadingAnimation /> }
-                <header
-                    className={styles.header}
-                    formskip
-                >
-                    <h1>
-                        Add lead
-                    </h1>
-                    <AccentButton
-                        transparent
-                        type="button"
-                        disabled={pending}
-                        onClick={onSettingsButtonClick}
-                    >
-                        Settings
-                    </AccentButton>
-                </header>
                 <Faram
                     className={styles.inputs}
                     onChange={this.handleFaramChange}
-                    onValidationSucces={this.handleFaramValidationSuccess}
+                    onValidationSuccess={this.handleFaramValidationSuccess}
                     onValidationFailure={this.handleFaramValidationFailure}
                     schema={this.schema}
                     error={faramErrors}
@@ -379,53 +410,53 @@ export default class AddLead extends React.PureComponent {
                 >
                     <MultiSelectInput
                         faramElementName="project"
-                        label="Project"
+                        label={projectInputLabel}
                         options={projects}
-                        keySelector={d => d.id}
-                        labelSelector={d => d.title}
+                        keySelector={projectKeySelector}
+                        labelSelector={projectLabelSelector}
                     />
                     <TextInput
                         faramElementName="title"
-                        label="Title"
+                        label={titleInputLabel}
                     />
                     <TextInput
                         faramElementName="source"
-                        label="Source"
+                        label={sourceInputLabel}
                     />
                     <SelectInput
                         faramElementName="confidentiality"
-                        label="Confidentiality"
+                        label={confidentialityInputLabel}
                         options={confidentiality}
-                        keySelector={d => d.key}
-                        labelSelector={d => d.value}
+                        keySelector={keySelector}
+                        labelSelector={labelSelector}
                         renderEmpty={renderEmpty}
                     />
                     <MultiSelectInput
                         faramElementName="assignee"
-                        label="Assigned to"
+                        label={assigneeInputLabel}
                         options={assignee}
-                        keySelector={d => (d || {}).key}
-                        labelSelector={d => (d || {}).value}
+                        keySelector={keySelector}
+                        labelSelector={labelSelector}
                         renderEmpty={renderEmpty}
                     />
                     <DateInput
                         faramElementName="publishedOn"
-                        label="Published on"
+                        label={publishedOnInputLabel}
                     />
                     <TextInput
                         faramElementName="url"
-                        label="Url"
+                        label={urlInputLabel}
                     />
                     <TextInput
                         faramElementName="website"
-                        label="website"
+                        label={websiteInputLabel}
                     />
                     <div className={styles.actionButtons}>
                         <PrimaryButton
                             type="submit"
                             disabled={pending}
                         >
-                            Submit
+                            { submitButtonTitle }
                         </PrimaryButton>
                     </div>
                 </Faram>

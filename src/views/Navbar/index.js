@@ -5,7 +5,8 @@ import styles from './styles.scss';
 
 const propTypes = {
     className: PropTypes.string,
-    rightComponent: PropTypes.node,
+    rightComponent: PropTypes.func,
+    title: PropTypes.string.isRequired,
 };
 
 const defaultProps = {
@@ -31,12 +32,11 @@ export default class Navbar extends React.Component {
     render() {
         const { rightComponent: RightComponent } = this.props;
         const className = this.getClassName();
-        const title = 'Add lead';
 
         return (
             <div className={className}>
                 <h1 className={styles.title}>
-                    { title }
+                    { this.props.title }
                 </h1>
                 <RightComponent />
             </div>

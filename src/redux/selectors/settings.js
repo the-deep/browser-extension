@@ -1,18 +1,24 @@
+import { createSelector } from 'reselect';
+
 export const webServerAddressSelector = ({ settings }) => (
-    settings.serverAddress || ''
+    settings.webServerAddress || ''
 );
 
 export const apiServerAddressSelector = ({ settings }) => (
-    settings.apiAddress || ''
+    settings.apiServerAddress || ''
 );
 
 export const serverSelector = ({ settings }) => (
     settings.server || ''
 );
 
-
-export const serverAddressSelector = ({ settings }) => ({
-    web: settings.webServerAddress || '',
-    api: settings.apiServerAddress || '',
-    server: settings.server || '',
-});
+export const serverAddressSelector = createSelector(
+    webServerAddressSelector,
+    apiServerAddressSelector,
+    serverSelector,
+    (web, api, server) => ({
+        web,
+        api,
+        server,
+    }),
+);

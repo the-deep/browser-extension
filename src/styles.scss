@@ -1,0 +1,51 @@
+@import './stylesheets/base';
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .navbar {
+        flex-shrink: 0;
+    }
+
+    .add-lead {
+        flex-grow: 1;
+    }
+
+    .settings {
+        flex-grow: 1;
+    }
+
+    %app-message {
+        flex-direction: column;
+        flex-grow: 1;
+        height: auto;
+
+        .icon {
+            margin-bottom: $spacing-large;
+            font-size: $font-size-ultra-large-alt;
+        }
+
+        .message {
+            font-size: $font-size-extra-large;
+        }
+    }
+
+    .loading-message {
+        @extend %app-message;
+    }
+
+    .error-message {
+        @extend %app-message;
+        color: $color-danger;
+    }
+
+    .not-authenticated-message {
+        @extend %app-message;
+    }
+
+    .nav-button {
+        font-size: $font-size-large;
+    }
+}

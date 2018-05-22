@@ -88,7 +88,6 @@ export const domainDataReducers = {
     [UPDATE_INPUT_VALUE_ACTION]: updateInputValue,
     [UPDATE_INPUT_VALUES_ACTION]: updateInputValues,
     [CLEAR_INPUT_VALUE_ACTION]: clearInputValue,
-    // [LOGIN_ACTION]: login,
 };
 
 const domainDataReducer = createReducerWithMap(domainDataReducers, initialDomainDataState);

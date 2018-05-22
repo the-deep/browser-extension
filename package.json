@@ -75,7 +75,6 @@
         "react-redux": "^5.0.6",
         "redux": "^3.7.2",
         "redux-persist": "^5.4.0",
-        "reselect": "^3.0.1",
-        "uws": "^10.148.0"
+        "reselect": "^3.0.1"
     }
 }

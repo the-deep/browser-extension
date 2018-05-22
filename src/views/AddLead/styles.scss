@@ -6,17 +6,9 @@
     flex-direction: column;
     width: 100%;
 
-    .header {
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-        justify-content: space-between;
-        padding: $spacing-medium-alt $spacing-extra-large;
-    }
-
     .inputs {
         flex-grow: 1;
-        padding: 0 $spacing-extra-large;
+        padding: $spacing-small $spacing-large;
         overflow-y: auto;
 
         >* {
@@ -28,30 +20,39 @@
         display: flex;
         flex-shrink: 0;
         justify-content: flex-end;
-        padding: $spacing-medium-alt $spacing-extra-large;
+    }
+}
+
+%message {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: center;
+
+    .icon {
+        opacity: .77;
+        margin-bottom: $spacing-medium;
+        font-size: $font-size-ultra-large-alt;
+    }
+
+    .message {
+        opacity: .77;
+        font-size: $font-size-extra-large;
     }
 }
 
 .submit-success {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    justify-content: center;
-    height: $height-app;
+    @extend %message;
     color: $color-success;
 
     .add-entry-link {
-        background-color: $color-accent;
-        cursor: pointer;
-        padding: $spacing-small;
-        color: $color-text-on-accent;
+        @include button-like-link($color-accent);
+        margin-top: $spacing-super-large;
     }
 }
 
 .submit-failure {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: $height-app;
+    @extend %message;
     color: $color-danger;
 }

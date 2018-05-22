@@ -47,6 +47,8 @@ const webServerAddressTitle = 'Web server address';
 const webServerAddressInputPlaceholder = 'eg: https://thedeep.io';
 const apiServerAddressTitle = 'API server address';
 const apiServerAddressInputPlaceholder = 'eg: https://api.thedeep.io';
+const saveSuccessfulMessage = 'Settings saved successfully';
+// const saveFailureMessage = 'Failed to save';
 
 @connect(mapStateToProps, mapDispatchToProps)
 export default class Settings extends React.PureComponent {
@@ -56,7 +58,6 @@ export default class Settings extends React.PureComponent {
     constructor(props) {
         super(props);
 
-        console.warn('constructor', props);
         this.state = {
             inputValues: {
                 server: props.server,
@@ -64,13 +65,19 @@ export default class Settings extends React.PureComponent {
                 apiServerAddress: props.apiServerAddress,
             },
             faramErrors: {},
+            pristine: true,
         };
+
+        // NOTE: in development mode, http://localhost can also be used as url
+        const conditionForUrl = process.env.NODE_ENV === 'development'
+            ? [requiredCondition]
+            : [requiredCondition, urlCondition];
 
         this.schema = {
             fields: {
                 server: [requiredCondition],
-                webServerAddress: [requiredCondition, urlCondition],
-                apiServerAddress: [requiredCondition, urlCondition],
+                webServerAddress: conditionForUrl,
+                apiServerAddress: conditionForUrl,
             },
         };
 
@@ -83,11 +90,19 @@ export default class Settings extends React.PureComponent {
                 id: 'alpha',
                 title: 'Alpha',
             },
-            {
-                id: 'custom',
-                title: 'Custom',
-            },
         ];
+
+        if (process.env.NODE_ENV === 'development') {
+            this.serverOptions.push({
+                id: 'localhost',
+                title: 'Localhost',
+            });
+        }
+
+        this.serverOptions.push({
+            id: 'custom',
+            title: 'Custom',
+        });
 
         this.serverAddresses = {
             beta: {
@@ -98,16 +113,18 @@ export default class Settings extends React.PureComponent {
                 web: 'https://deeper.togglecorp.com',
                 api: 'https://api.deeper.togglecorp.com',
             },
+            localhost: {
+                web: 'http://localhost:3000',
+                api: 'http://localhost:8000',
+            },
             custom: {
-                web: '',
-                api: '',
+                web: 'http://',
+                api: 'http://',
             },
         };
     }
 
     componentWillReceiveProps(nextProps) {
-        console.warn('cwrp', nextProps);
-
         const {
             server: newServer,
             webServerAddress: newWebServerAddress,
@@ -126,11 +143,12 @@ export default class Settings extends React.PureComponent {
         ) {
             this.setState({
                 inputValues: {
-                    server: nextProps.server,
-                    webServerAddress: nextProps.webServerAddress,
-                    apiServerAddress: nextProps.apiServerAddress,
+                    server: newServer,
+                    webServerAddress: newWebServerAddress,
+                    apiServerAddress: newApiServerAddress,
                 },
                 faramErrors: {},
+                pristine: true,
             });
         }
     }
@@ -148,7 +166,10 @@ export default class Settings extends React.PureComponent {
     }
 
     showSaveStatus = () => {
-        this.setState({ saveStatus: 'Successfully saved' });
+        this.setState({
+            saveStatus: saveSuccessfulMessage,
+            pristine: true,
+        });
 
         if (this.timeout) {
             clearTimeout(this.timeout);
@@ -168,6 +189,7 @@ export default class Settings extends React.PureComponent {
         this.setState({
             faramErrors,
             inputValues: newValues,
+            pristine: false,
         });
     }
 
@@ -186,6 +208,7 @@ export default class Settings extends React.PureComponent {
             inputValues,
             faramErrors,
             saveStatus,
+            pristine,
         } = this.state;
 
         const isCustomInput = inputValues.server === 'custom';
@@ -194,7 +217,7 @@ export default class Settings extends React.PureComponent {
             <div className={styles.settings}>
                 <Faram
                     onValidationSuccess={this.handleFormSuccess}
-                    onValidationFail={this.handleFormFailure}
+                    onValidationFailure={this.handleFormFailure}
                     onChange={this.handleFormChange}
                     schema={this.schema}
                     error={faramErrors}
@@ -216,21 +239,24 @@ export default class Settings extends React.PureComponent {
                             faramElementName="webServerAddress"
                             label={webServerAddressTitle}
                             placeholder={webServerAddressInputPlaceholder}
-                            disabled={!isCustomInput}
+                            readOnly={!isCustomInput}
                         />
                         <TextInput
                             className={styles.input}
                             faramElementName="apiServerAddress"
                             label={apiServerAddressTitle}
                             placeholder={apiServerAddressInputPlaceholder}
-                            disabled={!isCustomInput}
+                            readOnly={!isCustomInput}
                         />
                     </div>
                     <footer className={styles.footer}>
                         <div className={styles.saveStatus}>
                             { saveStatus }
                         </div>
-                        <PrimaryButton type="submit">
+                        <PrimaryButton
+                            type="submit"
+                            disabled={pristine}
+                        >
                             { saveButtonLabel }
                         </PrimaryButton>
                     </footer>

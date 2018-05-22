@@ -11,8 +11,8 @@ export default class WebInfo extends Request {
     handleSuccess = (response) => { this.parent.fillWebInfo(response); }
 
     create = (url) => {
-        super.create({
-            url: createUrlForWebInfo,
+        this.createDefault({
+            url: createUrlForWebInfo(),
             createParams: createParamsForWebInfo,
             params: { url },
         });

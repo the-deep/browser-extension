@@ -3,11 +3,10 @@ import {
     createParamsForTokenRefresh,
     createUrlForTokenRefresh,
 } from '../rest/token.js';
-import {
-    alterResponseErrorToFaramError,
-} from '../utils/faram.js';
 
-const errorMsg = 'Oops, something went wrong';
+import { alterResponseErrorToFaramError } from '../utils/faram.js';
+
+const fatalErrorMessage = 'Failed to communicate with the server';
 
 export default class TokenRefresh extends Request {
     handlePreLoad = () => {
@@ -17,7 +16,7 @@ export default class TokenRefresh extends Request {
     }
 
     handleSuccess = (response) => {
-        const { setToken } = this.props;
+        const { setToken } = this.parent;
 
         const params = {
             token: {
@@ -28,36 +27,37 @@ export default class TokenRefresh extends Request {
 
         setToken(params);
         this.parent.setState({
+            error: undefined,
             pendingTokenRefresh: false,
-            errorMessage: undefined,
             authenticated: true,
         });
     }
 
     handleFailure = (response) => {
         console.error(response);
-        const { formErrors } = alterResponseErrorToFaramError(response);
+        const faramErrors = alterResponseErrorToFaramError(response);
+
         this.parent.setState({
-            pending: false,
-            errorMessage: formErrors.join(', '),
+            pendingTokenRefresh: false,
             authenticated: false,
+            error: faramErrors.$internal.join(', '),
         });
     }
 
     handleFatal = (response) => {
         console.error(response);
         this.parent.setState({
-            pending: false,
-            error: errorMsg,
+            pendingTokenRefresh: false,
             authenticated: false,
+            error: fatalErrorMessage,
         });
     }
 
-    create = (token) => {
-        super.create({
+    create = (token = {}) => {
+        this.createDefault({
             url: createUrlForTokenRefresh(),
             createParams: createParamsForTokenRefresh,
-            options: token,
+            params: token,
         });
     }
 }

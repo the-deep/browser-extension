@@ -4,7 +4,7 @@ import {
     commonHeaderForGet,
 } from '../config/rest';
 
-export const createUrlForProjects = () => (`
+export const createUrlForProjectList = () => (`
     ${getApiEndpoint()}/projects/
 `);
 

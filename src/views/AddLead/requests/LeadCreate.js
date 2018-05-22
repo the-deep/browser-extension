@@ -9,7 +9,6 @@ export default class LeadCreate extends Request {
     handlePreLoad = () => { this.parent.setState({ pendingLeadCreate: true }); }
 
     handleSuccess = (response) => {
-        this.parent.setLeadCreate({ leadOptions: response });
         let submittedLeadId;
         let submittedProjectId;
 
@@ -25,6 +24,7 @@ export default class LeadCreate extends Request {
             leadSubmittedSuccessfully: true,
             pendingLeadCreate: false,
         });
+
         this.parent.clearInputValue({
             tabId: currentTabId,
         });
@@ -49,7 +49,7 @@ export default class LeadCreate extends Request {
     }
 
     create = (values) => {
-        super.create({
+        this.createDefault({
             url: createUrlForLeadCreate(),
             createParams: createParamsForLeadCreate,
             params: {

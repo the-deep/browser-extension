@@ -1,9 +1,9 @@
-import Request from '../../../utils/Request.js';
+import Request from '../../../utils/Request';
 
 import {
     createUrlForProjectList,
     createParamsForProjectList,
-} from '../../../rest/lead.js';
+} from '../../../rest/project';
 
 export default class ProjectList extends Request {
     handlePreLoad = () => { this.parent.setState({ pendingProjectList: true }); }
@@ -14,9 +14,9 @@ export default class ProjectList extends Request {
         this.parent.setProjectList(params);
     }
 
-    create = (projectId) => {
-        super.create({
-            url: createUrlForProjectList(projectId),
+    create = () => {
+        this.createDefault({
+            url: createUrlForProjectList(),
             createParams: createParamsForProjectList,
         });
     }

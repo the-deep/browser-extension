@@ -7,12 +7,12 @@ export default class Request {
         this.parent = parent;
         this.request = {
             start: () => { console.warn(requestNotCreatedMessage); },
-            stop: () => { console.warn(requestNotCreatedMessage); },
+            stop: () => {},
         };
         this.createParams = {};
     }
 
-    create = (createOptions) => {
+    createDefault = (createOptions) => {
         this.createOptions = createOptions;
 
         const {
@@ -25,6 +25,7 @@ export default class Request {
             .url(url)
             .params(() => createParams(params))
             .preLoad(this.handlePreLoad)
+            .postLoad(this.handlePostLoad)
             .success(this.handleSuccess)
             .failure(this.handleFailure)
             .fatal(this.handleFatal)

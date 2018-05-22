@@ -12,11 +12,11 @@ export default class LeadOptions extends Request {
 
     handleSuccess = (response) => {
         this.parent.setLeadOptions({ leadOptions: response });
+        this.parent.fillExtraInfo();
     }
 
-
     create = (projectId) => {
-        super.create({
+        this.createDefault({
             url: createUrlForLeadOptions(projectId),
             createParams: createParamsForLeadOptions,
         });

@@ -17,7 +17,6 @@ const middleware = [
 
 // Override compose if development mode and redux extension is installed
 const overrideCompose = process.env.NODE_ENV === 'development';
-console.warn('Overriding compose', overrideCompose);
 const applicableComposer = overrideCompose
     ? composeWithDevTools({ realtime: true })
     : compose;
