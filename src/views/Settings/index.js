@@ -181,10 +181,13 @@ export default class Settings extends React.PureComponent {
 
     handleFormChange = (value, faramErrors) => {
         const newValues = { ...value };
+        const { inputValues } = this.state;
 
-        const serverAddress = this.serverAddresses[newValues.server];
-        newValues.webServerAddress = serverAddress.web;
-        newValues.apiServerAddress = serverAddress.api;
+        if (value.server !== inputValues.server) {
+            const serverAddress = this.serverAddresses[newValues.server];
+            newValues.webServerAddress = serverAddress.web;
+            newValues.apiServerAddress = serverAddress.api;
+        }
 
         this.setState({
             faramErrors,
@@ -199,6 +202,7 @@ export default class Settings extends React.PureComponent {
 
     handleFormSuccess = (values) => {
         const { setSettings } = this.props;
+        console.warn(values);
         setSettings(values);
         this.showSaveStatus();
     }

@@ -7,7 +7,6 @@ import Message from './vendor/react-store/components/View/Message';
 import AccentButton from './vendor/react-store/components/Action/Button/AccentButton';
 
 import { createUrlForBrowserExtensionPage } from './rest/web.js';
-import { getWebsiteFromUrl } from './utils/url';
 import TokenRefresh from './requests/TokenRefresh.js';
 
 import AddLead from './views/AddLead';
@@ -21,6 +20,9 @@ import {
     setCurrentTabInfoAction,
     tokenSelector,
     webServerAddressSelector,
+    clearDomainDataAction,
+    clearProjectListAction,
+    clearLeadOptionsAction,
 } from './redux';
 
 const mapStateToProps = state => ({
@@ -31,6 +33,9 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
     setCurrentTabInfo: params => dispatch(setCurrentTabInfoAction(params)),
     setToken: params => dispatch(setTokenAction(params)),
+    clearDomainData: () => dispatch(clearDomainDataAction()),
+    clearLeadOptions: () => dispatch(clearLeadOptionsAction()),
+    clearProjectList: () => dispatch(clearProjectListAction()),
 });
 
 const propTypes = {
@@ -41,6 +46,9 @@ const propTypes = {
     setCurrentTabInfo: PropTypes.func.isRequired,
     setToken: PropTypes.func.isRequired,
     webServerAddress: PropTypes.string.isRequired,
+    clearDomainData: PropTypes.func.isRequired,
+    clearLeadOptions: PropTypes.func.isRequired,
+    clearProjectList: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
@@ -127,9 +135,17 @@ class App extends React.PureComponent {
 
     componentWillReceiveProps(nextProps) {
         const { webServerAddress: newWebServerAddress } = nextProps;
-        const { webServerAddress: oldWebServerAddress } = this.props;
+        const {
+            clearDomainData,
+            clearProjectList,
+            clearLeadOptions,
+            webServerAddress: oldWebServerAddress,
+        } = this.props;
 
         if (oldWebServerAddress !== newWebServerAddress) {
+            clearDomainData();
+            clearProjectList();
+            clearLeadOptions();
             this.getTokenFromBackground(newWebServerAddress);
         } else {
             const { token: newToken } = nextProps;
@@ -201,7 +217,7 @@ class App extends React.PureComponent {
     }
 
     handleMessageReceive = (request, messageSender) => {
-        if (chrome.runtime.id === messageSender.id) {
+        if (chrome.runtime.id !== messageSender.id) {
             return;
         }
 
@@ -218,8 +234,7 @@ class App extends React.PureComponent {
                     webServerAddress,
                 } = this.props;
 
-                const website = getWebsiteFromUrl(webServerAddress);
-                if (sender === website) {
+                if (sender === webServerAddress) {
                     console.info('Received token through background', token);
                     setToken({ token });
                 }

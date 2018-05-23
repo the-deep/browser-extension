@@ -7,6 +7,7 @@ import initialDomainDataState from '../initial-state/domainData';
 export const UPDATE_INPUT_VALUE_ACTION = 'extension/UPDATE_INPUT_VALUE';
 export const UPDATE_INPUT_VALUES_ACTION = 'extension/UPDATE_INPUT_VALUES';
 export const CLEAR_INPUT_VALUE_ACTION = 'extension/CLEAR_INPUT_VALUES';
+export const CLEAR_DOMAIN_DATA_ACTION = 'extension/CLEAR_DOMAIN_DATA';
 
 // ACTION-CREATOR
 
@@ -29,7 +30,17 @@ export const clearInputValueAction = ({ tabId }) => ({
     tabId,
 });
 
+export const clearDomainDataAction = () => ({
+    type: CLEAR_DOMAIN_DATA_ACTION,
+});
+
 // REDUCER
+
+const clearDomainData = () => {
+    console.warn('Clearing domain data');
+    return initialDomainDataState;
+};
+
 const clearInputValue = (state, action) => {
     const { tabId } = action;
 
@@ -88,6 +99,7 @@ export const domainDataReducers = {
     [UPDATE_INPUT_VALUE_ACTION]: updateInputValue,
     [UPDATE_INPUT_VALUES_ACTION]: updateInputValues,
     [CLEAR_INPUT_VALUE_ACTION]: clearInputValue,
+    [CLEAR_DOMAIN_DATA_ACTION]: clearDomainData,
 };
 
 const domainDataReducer = createReducerWithMap(domainDataReducers, initialDomainDataState);
