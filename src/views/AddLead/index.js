@@ -180,6 +180,7 @@ export default class AddLead extends React.PureComponent {
         this.projectList.request.stop();
         this.leadOptions.request.stop();
         this.webInfo.request.stop();
+        this.leadCreate.request.stop();
     }
 
     requestForWebInfo = (url) => {

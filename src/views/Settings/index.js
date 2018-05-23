@@ -50,6 +50,9 @@ const apiServerAddressInputPlaceholder = 'eg: https://api.thedeep.io';
 const saveSuccessfulMessage = 'Settings saved successfully';
 // const saveFailureMessage = 'Failed to save';
 
+const keySelector = d => d.id;
+const labelSelector = d => d.title;
+
 @connect(mapStateToProps, mapDispatchToProps)
 export default class Settings extends React.PureComponent {
     static propTypes = propTypes;
@@ -235,8 +238,8 @@ export default class Settings extends React.PureComponent {
                             faramElementName="server"
                             options={this.serverOptions}
                             hideClearButton
-                            keySelector={d => d.id}
-                            labelSelector={d => d.title}
+                            keySelector={keySelector}
+                            labelSelector={labelSelector}
                         />
                         <TextInput
                             className={styles.input}
