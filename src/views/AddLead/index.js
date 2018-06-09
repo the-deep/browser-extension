@@ -110,6 +110,7 @@ export default class AddLead extends React.PureComponent {
             leadSubmittedSuccessfully: undefined,
             submittedLeadId: undefined,
             submittedProjectId: undefined,
+            errorDescription: undefined,
         };
 
         this.schema = {
@@ -149,6 +150,7 @@ export default class AddLead extends React.PureComponent {
         this.leadCreate = new LeadCreate({
             setState,
             clearInputValue: this.props.clearInputValue,
+            updateUiState: this.updateUiState,
         });
     }
 
@@ -216,8 +218,8 @@ export default class AddLead extends React.PureComponent {
         } = this.props;
 
         const values = {};
-        if (!inputValues.assignee || (inputValues.assignee || []).length === 0) {
-            values.assignee = [currentUserId];
+        if (!inputValues.assignee) {
+            values.assignee = currentUserId;
         }
         if (!inputValues.confidentiality) {
             values.confidentiality = ((leadOptions.confidentiality || [])[0] || {}).key;
@@ -283,6 +285,19 @@ export default class AddLead extends React.PureComponent {
             tabId: currentTabId,
             values: newValues,
             newUiState,
+        });
+    }
+
+    updateUiState = (uiState) => {
+        const {
+            currentTabId,
+            updateInputValues,
+        } = this.props;
+
+        updateInputValues({
+            tabId: currentTabId,
+            values: {},
+            uiState,
         });
     }
 
@@ -358,6 +373,9 @@ export default class AddLead extends React.PureComponent {
             <div className={styles.message}>
                 { leadSubmitFailureMessage }
             </div>
+            <div className={styles.description}>
+                { this.state.errorDescription }
+            </div>
         </div>
     )
 
@@ -432,7 +450,7 @@ export default class AddLead extends React.PureComponent {
                         labelSelector={labelSelector}
                         renderEmpty={renderEmpty}
                     />
-                    <MultiSelectInput
+                    <SelectInput
                         faramElementName="assignee"
                         label={assigneeInputLabel}
                         options={assignee}

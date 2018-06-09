@@ -2,7 +2,7 @@ import localforage from 'localforage';
 
 const storeConfig = {
     blacklist: ['mem'],
-    key: 'deeper-extension',
+    key: 'deeper-browser-extension',
     storage: localforage,
     version: 1,
 };

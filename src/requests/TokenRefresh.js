@@ -33,9 +33,8 @@ export default class TokenRefresh extends Request {
         });
     }
 
-    handleFailure = (response) => {
-        console.error(response);
-        const faramErrors = alterResponseErrorToFaramError(response);
+    handleFailure = (response = {}) => {
+        const faramErrors = alterResponseErrorToFaramError(response.errors);
 
         this.parent.setState({
             pendingTokenRefresh: false,
@@ -44,8 +43,9 @@ export default class TokenRefresh extends Request {
         });
     }
 
-    handleFatal = (response) => {
-        console.error(response);
+    handleFatal = () => {
+        console.warn('token refresh fatal error');
+
         this.parent.setState({
             pendingTokenRefresh: false,
             authenticated: false,

@@ -40,6 +40,12 @@
         opacity: .77;
         font-size: $font-size-extra-large;
     }
+
+    .description {
+        padding: $spacing-medium;
+        text-align: center;
+        font-size: $font-size-medium;
+    }
 }
 
 .submit-success {

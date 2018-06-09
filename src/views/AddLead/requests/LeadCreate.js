@@ -1,4 +1,5 @@
 import Request from '../../../utils/Request.js';
+import { alterResponseErrorToFaramError } from '../../../utils/faram.js';
 
 import {
     createUrlForLeadCreate,
@@ -23,6 +24,7 @@ export default class LeadCreate extends Request {
             submittedProjectId,
             leadSubmittedSuccessfully: true,
             pendingLeadCreate: false,
+            errorDescription: undefined,
         });
 
         this.parent.clearInputValue({
@@ -30,13 +32,35 @@ export default class LeadCreate extends Request {
         });
     }
 
-    handleFailure = () => {
-        this.parent.setState({
-            submittedLeadId: undefined,
-            submittedProjectId: undefined,
-            leadSubmittedSuccessfully: false,
-            pendingLeadCreate: false,
-        });
+    handleFailure = (response = {}) => {
+        const faramErrors = alterResponseErrorToFaramError(response.errors);
+
+        const {
+            $internal,
+            ...fieldErrors
+        } = faramErrors;
+
+        if (Object.keys(fieldErrors).length > 0) {
+            this.parent.setState({
+                submittedLeadId: undefined,
+                submittedProjectId: undefined,
+                leadSubmittedSuccessfully: undefined,
+                pendingLeadCreate: false,
+            });
+
+            this.parent.updateUiState({
+                faramErrors,
+                pristine: true,
+            });
+        } else {
+            this.parent.setState({
+                submittedLeadId: undefined,
+                submittedProjectId: undefined,
+                leadSubmittedSuccessfully: false,
+                pendingLeadCreate: false,
+                errorDescription: $internal.join(', '),
+            });
+        }
     }
 
     handleFatal = () => {
@@ -45,6 +69,7 @@ export default class LeadCreate extends Request {
             submittedProjectId: undefined,
             leadSubmittedSuccessfully: false,
             pendingLeadCreate: false,
+            errorDescription: undefined,
         });
     }
 

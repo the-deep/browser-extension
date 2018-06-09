@@ -5,7 +5,7 @@ import {
 } from '../config/rest';
 
 export const createUrlForProjectList = () => (`
-    ${getApiEndpoint()}/projects/
+    ${getApiEndpoint()}/projects/member-of/
 `);
 
 export const createParamsForProjectList = () => ({
