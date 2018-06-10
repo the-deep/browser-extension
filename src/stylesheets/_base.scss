@@ -1,5 +1,6 @@
 @import 'colors';
 @import 'dimens';
+@import 'utils';
 
 $font-family-sans-serif: 'Source Sans Pro', sans-serif;
 $font-family-monospace: 'Inconsolata', monospace;
@@ -12,9 +13,9 @@ body {
 }
 
 body {
-    background-color: $color-background;
+    background-color: $color-foreground-alt;
     width: $width-app;
-    min-height: $height-app;
+    height: $height-app;
     color: $color-text;
     font-family: $font-family-sans-serif;
     font-size: $font-size-default;

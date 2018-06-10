@@ -1,0 +1,64 @@
+@import '../../stylesheets/base';
+
+.add-lead {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    width: 100%;
+
+    .inputs {
+        flex-grow: 1;
+        padding: $spacing-small $spacing-large;
+        overflow-y: auto;
+
+        >* {
+            margin: $spacing-small-alt 0;
+        }
+    }
+
+    .action-buttons {
+        display: flex;
+        flex-shrink: 0;
+        justify-content: flex-end;
+    }
+}
+
+%message {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: center;
+
+    .icon {
+        opacity: .77;
+        margin-bottom: $spacing-medium;
+        font-size: $font-size-ultra-large-alt;
+    }
+
+    .message {
+        opacity: .77;
+        font-size: $font-size-extra-large;
+    }
+
+    .description {
+        padding: $spacing-medium;
+        text-align: center;
+        font-size: $font-size-medium;
+    }
+}
+
+.submit-success {
+    @extend %message;
+    color: $color-success;
+
+    .add-entry-link {
+        @include button-like-link($color-accent);
+        margin-top: $spacing-super-large;
+    }
+}
+
+.submit-failure {
+    @extend %message;
+    color: $color-danger;
+}

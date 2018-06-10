@@ -9,11 +9,28 @@
         <title>Deeper Extension</title>
         <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.css">
+
+        <style>
+            #root {
+                height: 100%;
+            }
+
+            #initializing-message {
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
     </head>
     <body>
         <noscript>
             You need to enable JavaScript to run this app.
         </noscript>
-        <div id="root"></div>
+        <div id="root">
+            <div id="initializing-message">
+                Initializing...
+            </div>
+        </div>
     </body>
 </html>
