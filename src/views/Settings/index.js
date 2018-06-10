@@ -113,7 +113,7 @@ export default class Settings extends React.PureComponent {
                 api: 'https://api.thedeep.io',
             },
             alpha: {
-                web: 'https://deeper.togglecorp.com',
+                web: 'https://alpha.thedeep.io',
                 api: 'https://api.deeper.togglecorp.com',
             },
             localhost: {
