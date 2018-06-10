@@ -348,6 +348,7 @@ export default class AddLead extends React.PureComponent {
         } = this.state;
 
         const { webServerAddress } = this.props;
+        const canAddEntry = !!(submittedProjectId && submittedLeadId);
         const targetUrl = `${webServerAddress}/projects/${submittedProjectId}/leads/${submittedLeadId}/edit-entries/`;
 
         return (
@@ -356,13 +357,15 @@ export default class AddLead extends React.PureComponent {
                 <div className={styles.message}>
                     { leadSubmitSuccessMessage }
                 </div>
-                <a
-                    target="_blank"
-                    className={styles.addEntryLink}
-                    href={targetUrl}
-                >
-                    { addEntryButtonTitle }
-                </a>
+                {canAddEntry && (
+                    <a
+                        target="_blank"
+                        className={styles.addEntryLink}
+                        href={targetUrl}
+                    >
+                        { addEntryButtonTitle }
+                    </a>
+                )}
             </div>
         );
     }
