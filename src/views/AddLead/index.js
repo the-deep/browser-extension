@@ -102,9 +102,10 @@ export default class AddLead extends React.PureComponent {
         super(props);
 
         this.state = {
-            pendingProjectList: false,
-            pendingLeadOptions: false,
-            pendingWebInfo: false,
+            pendingProjectList: true,
+            pendingLeadOptions: true,
+            pendingWebInfo: true,
+
             pendingLeadCreate: false,
 
             leadSubmittedSuccessfully: undefined,

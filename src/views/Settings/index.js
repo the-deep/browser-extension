@@ -71,16 +71,11 @@ export default class Settings extends React.PureComponent {
             pristine: true,
         };
 
-        // NOTE: in development mode, http://localhost can also be used as url
-        const conditionForUrl = process.env.NODE_ENV === 'development'
-            ? [requiredCondition]
-            : [requiredCondition, urlCondition];
-
         this.schema = {
             fields: {
                 server: [requiredCondition],
-                webServerAddress: conditionForUrl,
-                apiServerAddress: conditionForUrl,
+                webServerAddress: [requiredCondition, urlCondition],
+                apiServerAddress: [requiredCondition, urlCondition],
             },
         };
 
@@ -93,19 +88,15 @@ export default class Settings extends React.PureComponent {
                 id: 'alpha',
                 title: 'Alpha',
             },
-        ];
-
-        if (process.env.NODE_ENV === 'development') {
-            this.serverOptions.push({
+            {
                 id: 'localhost',
                 title: 'Localhost',
-            });
-        }
-
-        this.serverOptions.push({
-            id: 'custom',
-            title: 'Custom',
-        });
+            },
+            {
+                id: 'custom',
+                title: 'Custom',
+            },
+        ];
 
         this.serverAddresses = {
             beta: {
