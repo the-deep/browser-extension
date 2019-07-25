@@ -5,7 +5,6 @@ export const alterResponseErrorToFaramError = (e) => {
         errors = e.reduce(
             (acc, error) => {
                 const {
-                    internalNonFieldErrors = [],
                     nonFieldErrors = [],
                     ...formFieldErrors
                 } = error;
@@ -34,7 +33,6 @@ export const alterResponseErrorToFaramError = (e) => {
     }
 
     const {
-        internalNonFieldErrors = [],
         nonFieldErrors = [],
         ...formFieldErrorList
     } = errors;

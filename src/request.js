@@ -6,11 +6,48 @@ import {
     methods,
 } from '@togglecorp/react-rest-request';
 
-import { getApiEndpoint } from '#config/rest';
+import {
+    getApiEndpoint,
+    getWebEndpoint,
+} from '#config/rest';
+
 import schema from '#schema';
 import { tokenSelector } from '#redux';
 
-const alterResponseErrorToFaramError = (errors) => {
+const alterResponseErrorToFaramError = (e) => {
+    let errors = e;
+
+    if (Array.isArray(e)) {
+        errors = e.reduce(
+            (acc, error) => {
+                const {
+                    nonFieldErrors = [],
+                    ...formFieldErrors
+                } = error;
+
+                acc.nonFieldErrors = acc.nonFieldErrors.concat(nonFieldErrors);
+
+                Object.keys(formFieldErrors || {}).forEach(
+                    (key) => {
+                        if (acc[key]) {
+                            // append only unique errors
+                            const newErrors = error[key].filter(
+                                d => acc[key].indexOf(d) === -1,
+                            );
+                            acc[key] = acc[key].concat(newErrors);
+                        } else {
+                            acc[key] = [...error[key]];
+                        }
+                    },
+                );
+                return acc;
+            },
+            {
+                nonFieldErrors: [],
+            },
+        );
+    }
+
     const {
         nonFieldErrors = [],
         ...formFieldErrors
@@ -98,5 +135,10 @@ export const RequestCoordinator = compose(
     connect(mapStateToProps),
     CustomRequestCoordinator,
 );
+
+
+export const createUrlForBrowserExtensionPage = () => (`
+    ${getWebEndpoint()}/browser-extension/
+`);
 
 export * from '@togglecorp/react-rest-request';

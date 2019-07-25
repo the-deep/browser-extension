@@ -23,7 +23,7 @@ import Settings from '#views/Settings';
 import Navbar from '#views/Navbar';
 
 import TokenRefresh from '#requests/TokenRefresh.js';
-import { createUrlForBrowserExtensionPage } from '#rest/web.js';
+import { createUrlForBrowserExtensionPage } from '#request';
 
 import styles from './styles.scss';
 

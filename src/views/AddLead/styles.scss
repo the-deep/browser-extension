@@ -1,4 +1,4 @@
-@import '../../stylesheets/base';
+@import '../../stylesheets/utils';
 
 .add-lead {
     display: flex;
@@ -33,32 +33,32 @@
     .icon {
         opacity: .77;
         margin-bottom: var(--spacing-medium);
-        font-size: var(--font-size-ultra-large-alt);
+        font-size: var(--font-size-super-large-alt);
     }
 
     .message {
         opacity: .77;
-        font-size: var(font-size-extra-large);
+        font-size: var(--font-size-extra-large);
     }
 
     .description {
-        padding: var(spacing-medium);
+        padding: var(--spacing-medium);
         text-align: center;
-        font-size: var(font-size-medium);
+        font-size: var(--font-size-medium);
     }
 }
 
 .submit-success {
     @extend %message;
-    color: var(color-success);
+    color: var(--color-success);
 
     .add-entry-link {
-        @extend %button-like-link;
-        margin-top: var(spacing-super-large);
+        @include button-like-link(var(--color-primary));
+        margin-top: var(--spacing-super-large);
     }
 }
 
 .submit-failure {
     @extend %message;
-    color: var(color-danger);
+    color: var(--color-danger);
 }

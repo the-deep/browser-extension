@@ -8,6 +8,7 @@ import Faram, {
 } from '@togglecorp/faram';
 
 import DateInput from '#rsci/DateInput';
+import Icon from '#rscg/Icon';
 import MultiSelectInput from '#rsci/MultiSelectInput';
 import SelectInput from '#rsci/SelectInput';
 import TextInput from '#rsci/TextInput';
@@ -32,10 +33,6 @@ import {
     leadOptionsSelector,
     webServerAddressSelector,
 } from '#redux';
-
-import LeadOptions from './requests/LeadOptions';
-import ProjectList from './requests/ProjectList';
-import LeadCreate from './requests/LeadCreate';
 
 import styles from './styles.scss';
 
@@ -71,11 +68,18 @@ const propTypes = {
     leadOptions: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types,
     updateInputValues: PropTypes.func.isRequired,
     clearInputValue: PropTypes.func.isRequired,
+    currentUserId: PropTypes.number,
+    webServerAddress: PropTypes.string.isRequired,
+    requests: PropTypes.shape({
+        webInfoRequest: PropTypes.object.isRequired,
+        leadOptionsRequest: PropTypes.object.isRequired,
+        projectsListRequest: PropTypes.object.isRequired,
+        leadCreateRequest: PropTypes.object.isRequired,
+    }).isRequired,
+    // eslint-disable-next-line react/no-unused-prop-types
     setProjectList: PropTypes.func.isRequired,
     // eslint-disable-next-line react/no-unused-prop-types
     setLeadOptions: PropTypes.func.isRequired,
-    currentUserId: PropTypes.number,
-    webServerAddress: PropTypes.string.isRequired,
 };
 
 const defaultProps = {
@@ -96,9 +100,6 @@ const sourceInputLabel = 'Publisher';
 const titleInputLabel = 'Title';
 const projectInputLabel = 'Project';
 
-const checkmarkIcon = 'ion-ios-checkmark-outline';
-const closeIcon = 'ion-ios-close-outline';
-
 const requests = {
     webInfoRequest: {
         url: '/web-info-extract/',
@@ -111,8 +112,15 @@ const requests = {
         },
     },
     leadOptionsRequest: {
-        url: ({ props: { inputValues } }) => `/lead-options/?project=${inputValues.project}`,
+        url: '/lead-options/',
         method: methods.GET,
+        query: ({ props: { inputValues } }) => ({
+            project: inputValues.project,
+            fields: [
+                'assignee',
+                'confidentiality',
+            ],
+        }),
         onPropsChanged: {
             inputValues: ({
                 props: { inputValues = {} },
@@ -138,6 +146,55 @@ const requests = {
             params.fillExtraInfo();
         },
     },
+    projectsListRequest: {
+        url: '/projects/member-of/',
+        query: {
+            fields: [
+                'id',
+                'title',
+            ],
+        },
+        method: methods.GET,
+        onMount: true,
+        onSuccess: ({ props, response }) => {
+            props.setProjectList({ projects: response.results });
+        },
+    },
+    leadCreateRequest: {
+        url: '/leads/',
+        method: methods.POST,
+        body: ({ params }) => ({
+            ...params.values,
+            sourceType: 'website',
+        }),
+        onSuccess: ({
+            props: { currentTabId },
+            params,
+            response,
+        }) => {
+            let submittedLeadId;
+            let submittedProjectId;
+
+            if (response.length === 1) {
+                submittedLeadId = response[0].id;
+                submittedProjectId = response[0].project;
+            }
+
+            params.handleLeadCreationSuccess({
+                submittedLeadId,
+                submittedProjectId,
+                leadSubmittedSuccessfully: true,
+                errorDescription: undefined,
+                tabId: currentTabId,
+            });
+        },
+        onFailure: ({ params, error }) => {
+            params.handleLeadCreationFailure(error.faramErrors);
+        },
+        onFatal: ({ params }) => {
+            params.handleLeadCreationFatal();
+        },
+    },
 };
 
 class AddLead extends React.PureComponent {
@@ -154,18 +211,10 @@ class AddLead extends React.PureComponent {
             },
         } = this.props;
 
-        webInfoRequest.setDefaultParams({
-            fillWebInfo: this.fillWebInfo,
-        });
-
-        leadOptionsRequest.setDefaultParams({
-            fillExtraInfo: this.fillExtraInfo,
-        });
+        webInfoRequest.setDefaultParams({ fillWebInfo: this.fillWebInfo });
+        leadOptionsRequest.setDefaultParams({ fillExtraInfo: this.fillExtraInfo });
 
         this.state = {
-            pendingProjectList: false,
-            pendingLeadCreate: false,
-
             leadSubmittedSuccessfully: undefined,
             submittedLeadId: undefined,
             submittedProjectId: undefined,
@@ -187,24 +236,6 @@ class AddLead extends React.PureComponent {
                 website: [requiredCondition],
             },
         };
-
-        const setState = d => this.setState(d);
-
-        this.projectList = new ProjectList({
-            setState,
-            setProjectList: this.props.setProjectList,
-        });
-
-        this.leadCreate = new LeadCreate({
-            setState,
-            clearInputValue: this.props.clearInputValue,
-            updateUiState: this.updateUiState,
-        });
-    }
-
-    componentWillUnmount() {
-        this.projectList.request.stop();
-        this.leadCreate.request.stop();
     }
 
     fillExtraInfo = () => {
@@ -318,9 +349,18 @@ class AddLead extends React.PureComponent {
     }
 
     handleFaramValidationSuccess = (values) => {
-        this.leadCreate.request.stop();
-        this.leadCreate.create(values);
-        this.leadCreate.request.start();
+        const {
+            requests: {
+                leadCreateRequest,
+            },
+        } = this.props;
+
+        leadCreateRequest.do({
+            values,
+            handleLeadCreationFailure: this.handleLeadCreationFailure,
+            handleLeadCreationSuccess: this.handleLeadCreationSuccess,
+            handleLeadCreationFatal: this.handleLeadCreationFatal,
+        });
     }
 
     handleFaramChange = (values, faramErrors) => {
@@ -341,6 +381,60 @@ class AddLead extends React.PureComponent {
         });
     }
 
+    handleLeadCreationSuccess = ({
+        submittedLeadId,
+        submittedProjectId,
+        leadSubmittedSuccessfully,
+        errorDescription,
+        tabId,
+    }) => {
+        const { clearInputValue } = this.props;
+        this.setState({
+            submittedLeadId,
+            submittedProjectId,
+            leadSubmittedSuccessfully,
+            errorDescription,
+        });
+        clearInputValue(tabId);
+    }
+
+    handleLeadCreationFailure = (faramErrors) => {
+        const {
+            $internal,
+            message,
+            ...fieldErrors
+        } = faramErrors;
+
+        if (Object.keys(fieldErrors).length > 0) {
+            this.setState({
+                submittedLeadId: undefined,
+                submittedProjectId: undefined,
+                leadSubmittedSuccessfully: undefined,
+            });
+
+            this.updateUiState({
+                faramErrors,
+                pristine: true,
+            });
+        } else {
+            this.setState({
+                submittedLeadId: undefined,
+                submittedProjectId: undefined,
+                leadSubmittedSuccessfully: false,
+                errorDescription: message || $internal.join(', '),
+            });
+        }
+    }
+
+    handleLeadCreationFatal = () => {
+        this.setState({
+            submittedLeadId: undefined,
+            submittedProjectId: undefined,
+            leadSubmittedSuccessfully: false,
+            errorDescription: undefined,
+        });
+    }
+
     renderSuccessMessage = () => {
         const {
             submittedLeadId,
@@ -353,7 +447,10 @@ class AddLead extends React.PureComponent {
 
         return (
             <div className={styles.submitSuccess}>
-                <div className={`${styles.icon} ${checkmarkIcon}`} />
+                <Icon
+                    className={styles.icon}
+                    name="checkmarkCircle"
+                />
                 <div className={styles.message}>
                     { leadSubmitSuccessMessage }
                 </div>
@@ -372,7 +469,10 @@ class AddLead extends React.PureComponent {
 
     renderFailureMessage = () => (
         <div className={styles.submitFailure}>
-            <div className={`${styles.icon} ${closeIcon}`} />
+            <Icon
+                className={styles.icon}
+                name="close"
+            />
             <div className={styles.message}>
                 { leadSubmitFailureMessage }
             </div>
@@ -395,15 +495,21 @@ class AddLead extends React.PureComponent {
                 webInfoRequest: {
                     pending: pendingWebInfo,
                 },
+                leadOptionsRequest: {
+                    pending: pendingLeadOptions,
+                },
+                projectsListRequest: {
+                    pending: pendingProjectList,
+                },
+                leadCreateRequest: {
+                    pending: pendingLeadCreate,
+                },
             },
         } = this.props;
+
         const { faramErrors = emptyObject } = uiState;
-        const {
-            pendingProjectList,
-            pendingLeadOptions,
-            pendingLeadCreate,
-            leadSubmittedSuccessfully,
-        } = this.state;
+
+        const { leadSubmittedSuccessfully } = this.state;
 
         const SuccessMessage = this.renderSuccessMessage;
         const FailureMessage = this.renderFailureMessage;
@@ -440,6 +546,7 @@ class AddLead extends React.PureComponent {
                         options={projects}
                         keySelector={projectKeySelector}
                         labelSelector={projectLabelSelector}
+                        hideClearAllButton
                     />
                     <TextInput
                         faramElementName="title"

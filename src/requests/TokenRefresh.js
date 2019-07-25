@@ -26,6 +26,7 @@ export default class TokenRefresh extends Request {
         };
 
         setToken(params);
+
         this.parent.setState({
             error: undefined,
             pendingTokenRefresh: false,

@@ -53,8 +53,7 @@ const saveSuccessfulMessage = 'Settings saved successfully';
 const keySelector = d => d.id;
 const labelSelector = d => d.title;
 
-@connect(mapStateToProps, mapDispatchToProps)
-export default class Settings extends React.PureComponent {
+class Settings extends React.PureComponent {
     static propTypes = propTypes;
     static defaultProps = defaultProps;
 
@@ -272,3 +271,5 @@ export default class Settings extends React.PureComponent {
         );
     }
 }
+
+export default connect(mapStateToProps, mapDispatchToProps)(Settings);
