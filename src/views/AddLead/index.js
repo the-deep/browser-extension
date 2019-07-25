@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 import Faram, {
     requiredCondition,
@@ -12,6 +13,11 @@ import SelectInput from '#rsci/SelectInput';
 import TextInput from '#rsci/TextInput';
 import PrimaryButton from '#rsca/Button/PrimaryButton';
 import LoadingAnimation from '#rscv/LoadingAnimation';
+import {
+    RequestCoordinator,
+    createRequestClient,
+    methods,
+} from '#request';
 
 import {
     updateInputValuesAction,
@@ -27,7 +33,6 @@ import {
     webServerAddressSelector,
 } from '#redux';
 
-import WebInfo from './requests/WebInfo';
 import LeadOptions from './requests/LeadOptions';
 import ProjectList from './requests/ProjectList';
 import LeadCreate from './requests/LeadCreate';
@@ -93,18 +98,59 @@ const projectInputLabel = 'Project';
 const checkmarkIcon = 'ion-ios-checkmark-outline';
 const closeIcon = 'ion-ios-close-outline';
 
-@connect(mapStateToProps, mapDispatchToProps)
-export default class AddLead extends React.PureComponent {
+const requests = {
+    webInfoRequest: {
+        url: '/web-info-extract/',
+        body: ({ props: { currentTabId } }) => ({ url: currentTabId }),
+        method: methods.POST,
+        onPropsChanged: ['currentTabId'],
+        onMount: ({ props: { currentTabId } }) => currentTabId && currentTabId.length > 0,
+        onSuccess: ({ params, response }) => {
+            params.fillWebInfo(response);
+        },
+    },
+    leadOptionsRequest: {
+        url: ({ props: { inputValues } }) => `/lead-options/?project=${inputValues.project}`,
+        method: methods.GET,
+        onMount: ({
+            props: {
+                inputValues: { project } = {},
+                setLeadOptions,
+            },
+        }) => {
+            if (!project || project.length <= 0) {
+                setLeadOptions({ leadOptions: emptyObject });
+                return false;
+            }
+            return true;
+        },
+        onSuccess: ({ props, params, response }) => {
+            props.setLeadOptions({ leadOptions: response });
+            params.fillExtraInfo();
+        },
+    },
+};
+
+class AddLead extends React.PureComponent {
     static propTypes = propTypes;
     static defaultProps = defaultProps;
 
     constructor(props) {
         super(props);
 
+        const {
+            requests: {
+                webInfoRequest,
+            },
+        } = this.props;
+
+        webInfoRequest.setDefaultParams({
+            fillWebInfo: this.fillWebInfo,
+        });
+
         this.state = {
             pendingProjectList: false,
             pendingLeadOptions: false,
-            pendingWebInfo: false,
             pendingLeadCreate: false,
 
             leadSubmittedSuccessfully: undefined,
@@ -131,11 +177,6 @@ export default class AddLead extends React.PureComponent {
 
         const setState = d => this.setState(d);
 
-        this.webInfo = new WebInfo({
-            setState,
-            fillWebInfo: this.fillWebInfo,
-        });
-
         this.leadOptions = new LeadOptions({
             setState,
             setLeadOptions: this.props.setLeadOptions,
@@ -160,7 +201,6 @@ export default class AddLead extends React.PureComponent {
 
         // NOTE: load leadoptions just in case
         this.requestForLeadOptions(this.props.inputValues.project);
-        this.requestForWebInfo(this.props.currentTabId);
     }
 
     componentWillReceiveProps(nextProps) {
@@ -172,26 +212,12 @@ export default class AddLead extends React.PureComponent {
                 this.requestForLeadOptions(newInputValues.project);
             }
         }
-
-        if (this.props.currentTabId !== nextProps.currentTabId) {
-            this.requestForWebInfo(nextProps.currentTabId);
-        }
     }
 
     componentWillUnmount() {
         this.projectList.request.stop();
         this.leadOptions.request.stop();
-        this.webInfo.request.stop();
         this.leadCreate.request.stop();
-    }
-
-    requestForWebInfo = (url) => {
-        this.webInfo.request.stop();
-
-        if (url && url.length > 0) {
-            this.webInfo.create(url);
-            this.webInfo.request.start();
-        }
     }
 
     requestForLeadOptions = (project) => {
@@ -391,12 +417,16 @@ export default class AddLead extends React.PureComponent {
                 assignee = [],
                 confidentiality = [],
             },
+            requests: {
+                webInfoRequest: {
+                    pending: pendingWebInfo,
+                },
+            },
         } = this.props;
         const { faramErrors = emptyObject } = uiState;
         const {
             pendingProjectList,
             pendingLeadOptions,
-            pendingWebInfo,
             pendingLeadCreate,
             leadSubmittedSuccessfully,
         } = this.state;
@@ -486,3 +516,9 @@ export default class AddLead extends React.PureComponent {
         );
     }
 }
+
+export default compose(
+    connect(mapStateToProps, mapDispatchToProps),
+    RequestCoordinator,
+    createRequestClient(requests),
+)(AddLead);

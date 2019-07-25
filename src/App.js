@@ -83,7 +83,6 @@ Object.keys(iconNames).forEach((key) => {
     addIcon('font', key, iconNames[key]);
 });
 
-@connect(mapStateToProps, mapDispatchToProps)
 class App extends React.PureComponent {
     static propTypes = propTypes;
     static defaultProps = defaultProps;
@@ -349,4 +348,4 @@ class App extends React.PureComponent {
     }
 }
 
-export default App;
+export default connect(mapStateToProps, mapDispatchToProps)(App);

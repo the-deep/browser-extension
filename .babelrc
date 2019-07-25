@@ -30,11 +30,13 @@
                     "#components": "./src/components",
                     "#redux": "./src/redux",
                     "#config": "./src/config",
+                    "#utils": "./src/utils",
                     "#views": "./src/views",
                     "#rest": "./src/rest",
                     "#store": "./src/store",
                     "#constants": "./src/constants",
                     "#request": "./src/request",
+                    "#schema": "./src/schema",
                 }
             }
         ]

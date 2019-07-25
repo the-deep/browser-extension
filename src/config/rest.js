@@ -5,6 +5,8 @@ import {
     apiServerAddressSelector,
 } from '../redux';
 
+// NOTE; this file is obsolete
+
 export const prep = RestRequest.prepareUrlParams;
 
 export const getWebServerAddress = () => webServerAddressSelector(store.getState());
