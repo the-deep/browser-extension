@@ -1,22 +1,22 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
-
-import TextInput from '../../vendor/react-store/components/Input/TextInput';
-import SelectInput from '../../vendor/react-store/components/Input/SelectInput';
 import Faram, {
     requiredCondition,
     urlCondition,
-} from '../../vendor/react-store/components/Input/Faram';
+} from '@togglecorp/faram';
 
-import PrimaryButton from '../../vendor/react-store/components/Action/Button/PrimaryButton';
+import TextInput from '#rsci/TextInput';
+import SelectInput from '#rsci/SelectInput';
+
+import PrimaryButton from '#rsca/Button/PrimaryButton';
 
 import {
     setSettingsAction,
     webServerAddressSelector,
     apiServerAddressSelector,
     serverSelector,
-} from '../../redux';
+} from '#redux';
 
 import styles from './styles.scss';
 

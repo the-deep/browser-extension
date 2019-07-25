@@ -1,22 +1,17 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
-
-import DateInput from '../../vendor/react-store/components/Input/DateInput';
 import Faram, {
     requiredCondition,
     urlCondition,
-} from '../../vendor/react-store/components/Input/Faram';
-import MultiSelectInput from '../../vendor/react-store/components/Input/MultiSelectInput';
-import SelectInput from '../../vendor/react-store/components/Input/SelectInput';
-import TextInput from '../../vendor/react-store/components/Input/TextInput';
-import PrimaryButton from '../../vendor/react-store/components/Action/Button/PrimaryButton';
-import LoadingAnimation from '../../vendor/react-store/components/View/LoadingAnimation';
+} from '@togglecorp/faram';
 
-import WebInfo from './requests/WebInfo';
-import LeadOptions from './requests/LeadOptions';
-import ProjectList from './requests/ProjectList';
-import LeadCreate from './requests/LeadCreate';
+import DateInput from '#rsci/DateInput';
+import MultiSelectInput from '#rsci/MultiSelectInput';
+import SelectInput from '#rsci/SelectInput';
+import TextInput from '#rsci/TextInput';
+import PrimaryButton from '#rsca/Button/PrimaryButton';
+import LoadingAnimation from '#rscv/LoadingAnimation';
 
 import {
     updateInputValuesAction,
@@ -30,7 +25,12 @@ import {
     setLeadOptionsAction,
     leadOptionsSelector,
     webServerAddressSelector,
-} from '../../redux';
+} from '#redux';
+
+import WebInfo from './requests/WebInfo';
+import LeadOptions from './requests/LeadOptions';
+import ProjectList from './requests/ProjectList';
+import LeadCreate from './requests/LeadCreate';
 
 import styles from './styles.scss';
 

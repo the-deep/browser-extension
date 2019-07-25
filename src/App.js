@@ -2,18 +2,11 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import MultiViewContainer from './vendor/react-store/components/View/MultiViewContainer';
-import Message from './vendor/react-store/components/View/Message';
-import AccentButton from './vendor/react-store/components/Action/Button/AccentButton';
-
-import { createUrlForBrowserExtensionPage } from './rest/web.js';
-import TokenRefresh from './requests/TokenRefresh.js';
-
-import AddLead from './views/AddLead';
-import Settings from './views/Settings';
-import Navbar from './views/Navbar';
-
-import styles from './styles.scss';
+import { addIcon } from '#rscg/Icon';
+import MultiViewContainer from '#rscv/MultiViewContainer';
+import Message from '#rscv/Message';
+import AccentButton from '#rsca/Button/AccentButton';
+import { iconNames } from '#constants';
 
 import {
     setTokenAction,
@@ -23,7 +16,16 @@ import {
     clearDomainDataAction,
     clearProjectListAction,
     clearLeadOptionsAction,
-} from './redux';
+} from '#redux';
+
+import AddLead from '#views/AddLead';
+import Settings from '#views/Settings';
+import Navbar from '#views/Navbar';
+
+import TokenRefresh from '#requests/TokenRefresh.js';
+import { createUrlForBrowserExtensionPage } from '#rest/web.js';
+
+import styles from './styles.scss';
 
 const mapStateToProps = state => ({
     token: tokenSelector(state),
@@ -76,6 +78,10 @@ const loadingMessage = 'Initalizing...';
 const informationIcon = 'ion-ios-information-outline';
 const closeIcon = 'ion-ios-close-outline';
 // const serverCommunicationErrorMessage = 'Failed to communicate with the server';
+
+Object.keys(iconNames).forEach((key) => {
+    addIcon('font', key, iconNames[key]);
+});
 
 @connect(mapStateToProps, mapDispatchToProps)
 class App extends React.PureComponent {
@@ -305,7 +311,7 @@ class App extends React.PureComponent {
                         transparent
                         className={styles.navButton}
                         onClick={this.handleSettingsButtonClick}
-                        iconName="ion-android-settings"
+                        iconName="settings"
                     />
                 );
             case SETTINGS_VIEW:
@@ -314,7 +320,7 @@ class App extends React.PureComponent {
                         transparent
                         className={styles.navButton}
                         onClick={this.handleBackButtonClick}
-                        iconName="ion-android-arrow-back"
+                        iconName="back"
                     />
                 );
             default:
