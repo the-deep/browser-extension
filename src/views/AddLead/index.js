@@ -72,6 +72,7 @@ const propTypes = {
     updateInputValues: PropTypes.func.isRequired,
     clearInputValue: PropTypes.func.isRequired,
     setProjectList: PropTypes.func.isRequired,
+    // eslint-disable-next-line react/no-unused-prop-types
     setLeadOptions: PropTypes.func.isRequired,
     currentUserId: PropTypes.number,
     webServerAddress: PropTypes.string.isRequired,
@@ -112,6 +113,14 @@ const requests = {
     leadOptionsRequest: {
         url: ({ props: { inputValues } }) => `/lead-options/?project=${inputValues.project}`,
         method: methods.GET,
+        onPropsChanged: {
+            inputValues: ({
+                props: { inputValues = {} },
+                prevProps: { inputValues: prevInputValues = {} },
+            }) => (
+                inputValues.project !== prevInputValues.project
+            ),
+        },
         onMount: ({
             props: {
                 inputValues: { project } = {},
@@ -141,6 +150,7 @@ class AddLead extends React.PureComponent {
         const {
             requests: {
                 webInfoRequest,
+                leadOptionsRequest,
             },
         } = this.props;
 
@@ -148,9 +158,12 @@ class AddLead extends React.PureComponent {
             fillWebInfo: this.fillWebInfo,
         });
 
+        leadOptionsRequest.setDefaultParams({
+            fillExtraInfo: this.fillExtraInfo,
+        });
+
         this.state = {
             pendingProjectList: false,
-            pendingLeadOptions: false,
             pendingLeadCreate: false,
 
             leadSubmittedSuccessfully: undefined,
@@ -177,12 +190,6 @@ class AddLead extends React.PureComponent {
 
         const setState = d => this.setState(d);
 
-        this.leadOptions = new LeadOptions({
-            setState,
-            setLeadOptions: this.props.setLeadOptions,
-            fillExtraInfo: this.fillExtraInfo,
-        });
-
         this.projectList = new ProjectList({
             setState,
             setProjectList: this.props.setProjectList,
@@ -195,42 +202,9 @@ class AddLead extends React.PureComponent {
         });
     }
 
-    componentWillMount() {
-        this.projectList.create();
-        this.projectList.request.start();
-
-        // NOTE: load leadoptions just in case
-        this.requestForLeadOptions(this.props.inputValues.project);
-    }
-
-    componentWillReceiveProps(nextProps) {
-        const { inputValues: oldInputValues } = this.props;
-        const { inputValues: newInputValues } = nextProps;
-
-        if (oldInputValues !== newInputValues) {
-            if (oldInputValues.project !== newInputValues.project) {
-                this.requestForLeadOptions(newInputValues.project);
-            }
-        }
-    }
-
     componentWillUnmount() {
         this.projectList.request.stop();
-        this.leadOptions.request.stop();
         this.leadCreate.request.stop();
-    }
-
-    requestForLeadOptions = (project) => {
-        this.leadOptions.request.stop();
-
-        if (!project || project.length <= 0) {
-            const { setLeadOptions } = this.props;
-            setLeadOptions({ leadOptions: emptyObject });
-            return;
-        }
-
-        this.leadOptions.create(project);
-        this.leadOptions.request.start();
     }
 
     fillExtraInfo = () => {
