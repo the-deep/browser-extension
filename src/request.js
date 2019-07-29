@@ -66,12 +66,12 @@ const alterResponseErrorToFaramError = (e) => {
 };
 
 const mapStateToProps = state => ({
-    token: tokenSelector(state),
+    onlyMyToken: tokenSelector(state),
 });
 
 const CustomRequestCoordinator = createRequestCoordinator({
     transformParams: (data, props) => {
-        const { access } = props.token;
+        const { access } = props.onlyMyToken;
         const {
             method,
             body,
@@ -89,7 +89,7 @@ const CustomRequestCoordinator = createRequestCoordinator({
     },
     transformProps: (props) => {
         const {
-            token, // eslint-disable-line no-unused-vars
+            onlyMyToken, // eslint-disable-line no-unused-vars
             ...otherProps
         } = props;
         return otherProps;

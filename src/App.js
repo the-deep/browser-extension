@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 
 import { addIcon } from '#rscg/Icon';
@@ -18,12 +19,16 @@ import {
     clearLeadOptionsAction,
 } from '#redux';
 
+import {
+    RequestCoordinator,
+    createRequestClient,
+    methods,
+    createUrlForBrowserExtensionPage,
+} from '#request';
+
 import AddLead from '#views/AddLead';
 import Settings from '#views/Settings';
 import Navbar from '#views/Navbar';
-
-import TokenRefresh from '#requests/TokenRefresh.js';
-import { createUrlForBrowserExtensionPage } from '#request';
 
 import styles from './styles.scss';
 
@@ -77,11 +82,41 @@ const loadingMessage = 'Initalizing...';
 
 const informationIcon = 'ion-ios-information-outline';
 const closeIcon = 'ion-ios-close-outline';
-// const serverCommunicationErrorMessage = 'Failed to communicate with the server';
+
+const tokenRefreshFatalErrorMessage = 'Failed to communicate with the server';
+const tokenRefreshFailureMessage = 'Failed to refresh token';
 
 Object.keys(iconNames).forEach((key) => {
     addIcon('font', key, iconNames[key]);
 });
+
+const requests = {
+    tokenRefreshRequest: {
+        url: '/token/refresh/',
+        method: methods.POST,
+        body: ({ params }) => ({ refresh: (params.token || {}).refresh }),
+        onSuccess: ({
+            props: { setToken, token },
+            response,
+            params: {
+                setAuthAndError,
+            },
+        }) => {
+            const tokenObject = {
+                ...token,
+                access: response.access,
+            };
+            setToken({ token: tokenObject });
+            setAuthAndError(true);
+        },
+        onFailure: ({ params: { setAuthAndError } }) => {
+            setAuthAndError(false, tokenRefreshFailureMessage);
+        },
+        onFatal: ({ params: { setAuthAndError } }) => {
+            setAuthAndError(false, tokenRefreshFatalErrorMessage);
+        },
+    },
+};
 
 class App extends React.PureComponent {
     static propTypes = propTypes;
@@ -91,16 +126,10 @@ class App extends React.PureComponent {
         super(props);
 
         this.state = {
-            pendingTokenRefresh: true,
             pendingTabInfo: true,
             authenticated: false,
             activeView: ADD_LEAD_VIEW,
         };
-
-        this.tokenRefresh = new TokenRefresh({
-            setState: d => this.setState(d),
-            setToken: props.setToken,
-        });
 
         this.views = {
             addLead: {
@@ -145,6 +174,9 @@ class App extends React.PureComponent {
             clearProjectList,
             clearLeadOptions,
             webServerAddress: oldWebServerAddress,
+            requests: {
+                tokenRefreshRequest,
+            },
         } = this.props;
 
         if (oldWebServerAddress !== newWebServerAddress) {
@@ -158,8 +190,10 @@ class App extends React.PureComponent {
 
             if (newToken.refresh !== oldToken.refresh) {
                 if (newToken.refresh) {
-                    this.tokenRefresh.create(newToken);
-                    this.tokenRefresh.request.start();
+                    tokenRefreshRequest.do({
+                        token: newToken,
+                        setAuthAndError: this.handleErrorAndAuthChange,
+                    });
                 } else {
                     this.setState({ authenticated: false });
                 }
@@ -168,7 +202,6 @@ class App extends React.PureComponent {
     }
 
     componentWillUnmount() {
-        this.tokenRefresh.request.stop();
         chrome.runtime.onMessage.removeListener(this.handleMessageReceive);
     }
 
@@ -202,16 +235,22 @@ class App extends React.PureComponent {
 
     handleGetTokenFromBackgroundResponse = (response = {}) => {
         const token = response;
-        const { setToken } = this.props;
+        const {
+            setToken,
+            requests: {
+                tokenRefreshRequest,
+            },
+        } = this.props;
 
         setToken({ token });
         if (token && token.refresh) {
-            this.tokenRefresh.create(token);
-            this.tokenRefresh.request.start();
+            tokenRefreshRequest.do({
+                token,
+                setAuthAndError: this.handleErrorAndAuthChange,
+            });
         } else {
             this.setState({
                 pendingTabInfo: false,
-                pendingTokenRefresh: false,
                 authenticated: false,
             });
             chrome.tabs.create({
@@ -250,6 +289,13 @@ class App extends React.PureComponent {
         }
     }
 
+    handleErrorAndAuthChange = (authenticated, error) => {
+        this.setState({
+            error,
+            authenticated,
+        });
+    }
+
     handleSettingsButtonClick = () => {
         this.setState({ activeView: SETTINGS_VIEW });
     }
@@ -262,7 +308,14 @@ class App extends React.PureComponent {
         const iconClassNames = [styles.icon];
 
         const {
-            pendingTokenRefresh,
+            requests: {
+                tokenRefreshRequest: {
+                    pending: pendingTokenRefresh,
+                },
+            },
+        } = this.props;
+
+        const {
             pendingTabInfo,
             error,
         } = this.state;
@@ -348,4 +401,8 @@ class App extends React.PureComponent {
     }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default compose(
+    connect(mapStateToProps, mapDispatchToProps),
+    RequestCoordinator,
+    createRequestClient(requests),
+)(App);
