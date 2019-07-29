@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import Faram, {
     requiredCondition,
     urlCondition,
+    isDefined,
 } from '@togglecorp/faram';
 
 import PrimaryButton from '#rsca/Button/PrimaryButton';
@@ -545,12 +546,10 @@ class AddLead extends React.PureComponent {
         const SuccessMessage = this.renderSuccessMessage;
         const FailureMessage = this.renderFailureMessage;
 
-        if (leadSubmittedSuccessfully === true) {
-            return <SuccessMessage />;
-        }
-
-        if (leadSubmittedSuccessfully === false) {
-            return <FailureMessage />;
+        if (isDefined(leadSubmittedSuccessfully)) {
+            return leadSubmittedSuccessfully
+                ? <SuccessMessage />
+                : <FailureMessage />;
         }
 
         const disabled = pendingProjectList
