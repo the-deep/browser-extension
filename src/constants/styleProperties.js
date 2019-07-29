@@ -1,6 +1,6 @@
 const styleProperties = {
     widthApp: '400px',
-    heightApp: '514px',
+    heightApp: '550px',
 };
 
 export default styleProperties;

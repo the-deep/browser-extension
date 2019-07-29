@@ -70,8 +70,11 @@ class Settings extends React.PureComponent {
             pristine: true,
         };
 
+        // TODO: get this from constants
+        const isDev = process.env.NODE_ENV === 'development';
+
         // NOTE: in development mode, http://localhost can also be used as url
-        const conditionForUrl = process.env.NODE_ENV === 'development'
+        const conditionForUrl = isDev
             ? [requiredCondition]
             : [requiredCondition, urlCondition];
 
@@ -94,7 +97,7 @@ class Settings extends React.PureComponent {
             },
         ];
 
-        if (process.env.NODE_ENV === 'development') {
+        if (isDev) {
             this.serverOptions.push({
                 id: 'localhost',
                 title: 'Localhost',

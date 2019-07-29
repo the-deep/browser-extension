@@ -135,6 +135,7 @@ class App extends React.PureComponent {
             activeView: ADD_LEAD_VIEW,
         };
 
+        // TODO: Use rendererParams
         this.views = {
             addLead: {
                 component: () => {
@@ -146,7 +147,7 @@ class App extends React.PureComponent {
                     }
 
                     const AppMessage = this.renderMessage;
-                    return <AppMessage />;
+                    return (<AppMessage />);
                 },
             },
 
@@ -158,14 +159,13 @@ class App extends React.PureComponent {
         };
     }
 
-    componentWillMount() {
+    componentDidMount() {
         // set handler for message from background
         chrome.runtime.onMessage.addListener(this.handleMessageReceive);
 
         this.getCurrentTabInfo();
 
         const { webServerAddress } = this.props;
-
         if (webServerAddress) {
             this.getTokenFromBackground(webServerAddress);
         }
@@ -217,6 +217,7 @@ class App extends React.PureComponent {
     }
 
     getCurrentTabInfo = () => {
+        // TODO: we don't need to always create this callback
         const queryCallback = (tabs) => {
             const { setCurrentTabInfo } = this.props;
 
@@ -357,6 +358,7 @@ class App extends React.PureComponent {
         );
     }
 
+    // TODO: should use MultiViewContainer
     renderNavbarRightComponent = () => {
         const { activeView } = this.state;
 

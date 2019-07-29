@@ -28,6 +28,8 @@ const alterResponseErrorToFaramError = (e) => {
         errors = e.reduce(
             (acc, error) => {
                 const {
+                    // eslint-disable-next-line no-unused-vars
+                    internalNonFieldErrors = [],
                     nonFieldErrors = [],
                     ...formFieldErrors
                 } = error;
@@ -56,6 +58,8 @@ const alterResponseErrorToFaramError = (e) => {
     }
 
     const {
+        // eslint-disable-next-line no-unused-vars
+        internalNonFieldErrors = [],
         nonFieldErrors = [],
         ...formFieldErrors
     } = errors;

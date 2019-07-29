@@ -1,5 +1,4 @@
-export const dummy = '';
-
+// eslint-disable-next-line import/prefer-default-export
 export const getWebsiteFromUrl = (url = '') => {
     const pathArray = url.split('/');
     const protocol = pathArray[0];

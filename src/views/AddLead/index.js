@@ -301,7 +301,9 @@ class AddLead extends React.PureComponent {
             uiState,
         } = this.props;
 
+        // FIXME: use isDefined and isNotDefined
         const values = {};
+
         if (webInfo.project && (!inputValues.project || inputValues.project.length === 0)) {
             values.project = [webInfo.project];
         }
@@ -462,7 +464,8 @@ class AddLead extends React.PureComponent {
         } = this.state;
 
         const { webServerAddress } = this.props;
-        const canAddEntry = !!(submittedProjectId && submittedLeadId);
+        // TODO: use isDefined
+        const canAddEntry = !!submittedProjectId && !!submittedLeadId;
         const targetUrl = `${webServerAddress}/projects/${submittedProjectId}/leads/${submittedLeadId}/edit-entries/`;
 
         return (
