@@ -1,6 +1,8 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { persistStore } from 'redux-persist';
+import { initializeStyles } from '#rsu/styles';
+import { styleProperties } from '#constants';
 
 import App from './App';
 import store from './store';
@@ -11,6 +13,7 @@ export default class Root extends React.PureComponent {
 
         this.state = { rehydrated: false };
         this.store = store;
+        initializeStyles(styleProperties);
 
         console.info('React version:', React.version);
     }

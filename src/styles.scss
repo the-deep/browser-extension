@@ -1,5 +1,3 @@
-@import './stylesheets/base';
-
 .app {
     display: flex;
     flex-direction: column;
@@ -23,12 +21,12 @@
         height: auto;
 
         .icon {
-            margin-bottom: $spacing-large;
-            font-size: $font-size-ultra-large-alt;
+            margin-bottom: var(--spacing-large);
+            font-size: var(--font-size-ultra-large-alt);
         }
 
         .message {
-            font-size: $font-size-extra-large;
+            font-size: var(--font-size-extra-large);
         }
     }
 
@@ -38,7 +36,7 @@
 
     .error-message {
         @extend %app-message;
-        color: $color-danger;
+        color: var(--color-danger);
     }
 
     .not-authenticated-message {
@@ -46,6 +44,6 @@
     }
 
     .nav-button {
-        font-size: $font-size-large;
+        font-size: var(--font-size-large);
     }
 }

@@ -1,22 +1,22 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
-
-import TextInput from '../../vendor/react-store/components/Input/TextInput';
-import SelectInput from '../../vendor/react-store/components/Input/SelectInput';
 import Faram, {
     requiredCondition,
     urlCondition,
-} from '../../vendor/react-store/components/Input/Faram';
+} from '@togglecorp/faram';
 
-import PrimaryButton from '../../vendor/react-store/components/Action/Button/PrimaryButton';
+import TextInput from '#rsci/TextInput';
+import SegmentInput from '#rsci/SegmentInput';
+
+import PrimaryButton from '#rsca/Button/PrimaryButton';
 
 import {
     setSettingsAction,
     webServerAddressSelector,
     apiServerAddressSelector,
     serverSelector,
-} from '../../redux';
+} from '#redux';
 
 import styles from './styles.scss';
 
@@ -53,8 +53,7 @@ const saveSuccessfulMessage = 'Settings saved successfully';
 const keySelector = d => d.id;
 const labelSelector = d => d.title;
 
-@connect(mapStateToProps, mapDispatchToProps)
-export default class Settings extends React.PureComponent {
+class Settings extends React.PureComponent {
     static propTypes = propTypes;
     static defaultProps = defaultProps;
 
@@ -71,8 +70,11 @@ export default class Settings extends React.PureComponent {
             pristine: true,
         };
 
+        // TODO: get this from constants
+        const isDev = process.env.NODE_ENV === 'development';
+
         // NOTE: in development mode, http://localhost can also be used as url
-        const conditionForUrl = process.env.NODE_ENV === 'development'
+        const conditionForUrl = isDev
             ? [requiredCondition]
             : [requiredCondition, urlCondition];
 
@@ -95,7 +97,7 @@ export default class Settings extends React.PureComponent {
             },
         ];
 
-        if (process.env.NODE_ENV === 'development') {
+        if (isDev) {
             this.serverOptions.push({
                 id: 'localhost',
                 title: 'Localhost',
@@ -231,13 +233,12 @@ export default class Settings extends React.PureComponent {
                     value={inputValues}
                 >
                     <div className={styles.inputs}>
-                        <SelectInput
+                        <SegmentInput
                             className={styles.input}
                             label={serverSelectInputTitle}
                             placeholder={serverSelectInputPlaceholder}
                             faramElementName="server"
                             options={this.serverOptions}
-                            hideClearButton
                             keySelector={keySelector}
                             labelSelector={labelSelector}
                         />
@@ -272,3 +273,5 @@ export default class Settings extends React.PureComponent {
         );
     }
 }
+
+export default connect(mapStateToProps, mapDispatchToProps)(Settings);

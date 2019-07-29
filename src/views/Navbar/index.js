@@ -1,45 +1,31 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { _cs } from '@togglecorp/fujs';
 
 import styles from './styles.scss';
 
-const propTypes = {
+const Navbar = ({
+    title,
+    className,
+    rightComponent: RightComponent,
+}) => (
+    <div className={_cs(className, styles.navbar)}>
+        <h2 className={styles.title}>
+            { title }
+        </h2>
+        <RightComponent />
+    </div>
+);
+
+Navbar.propTypes = {
+    title: PropTypes.string.isRequired,
     className: PropTypes.string,
     rightComponent: PropTypes.func,
-    title: PropTypes.string.isRequired,
 };
 
-const defaultProps = {
-    className: '',
+Navbar.defaultProps = {
+    className: undefined,
     rightComponent: undefined,
 };
 
-export default class Navbar extends React.Component {
-    static propTypes = propTypes;
-    static defaultProps = defaultProps;
-
-    getClassName = () => {
-        const { className } = this.props;
-
-        const classNames = [
-            className,
-            styles.navbar,
-        ];
-
-        return classNames.join(' ');
-    }
-
-    render() {
-        const { rightComponent: RightComponent } = this.props;
-        const className = this.getClassName();
-
-        return (
-            <div className={className}>
-                <h1 className={styles.title}>
-                    { this.props.title }
-                </h1>
-                <RightComponent />
-            </div>
-        );
-    }
-}
+export default Navbar;

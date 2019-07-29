@@ -1,4 +1,4 @@
-@import '../../stylesheets/base';
+@import '../../stylesheets/utils';
 
 .add-lead {
     display: flex;
@@ -8,11 +8,11 @@
 
     .inputs {
         flex-grow: 1;
-        padding: $spacing-small $spacing-large;
+        padding: var(--spacing-small) var(--spacing-large);
         overflow-y: auto;
 
         >* {
-            margin: $spacing-small-alt 0;
+            margin: var(--spacing-small-alt) 0;
         }
     }
 
@@ -32,33 +32,33 @@
 
     .icon {
         opacity: .77;
-        margin-bottom: $spacing-medium;
-        font-size: $font-size-ultra-large-alt;
+        margin-bottom: var(--spacing-medium);
+        font-size: var(--font-size-super-large-alt);
     }
 
     .message {
         opacity: .77;
-        font-size: $font-size-extra-large;
+        font-size: var(--font-size-extra-large);
     }
 
     .description {
-        padding: $spacing-medium;
+        padding: var(--spacing-medium);
         text-align: center;
-        font-size: $font-size-medium;
+        font-size: var(--font-size-medium);
     }
 }
 
 .submit-success {
     @extend %message;
-    color: $color-success;
+    color: var(--color-success);
 
     .add-entry-link {
-        @include button-like-link($color-accent);
-        margin-top: $spacing-super-large;
+        @include button-like-link(var(--color-primary));
+        margin-top: var(--spacing-super-large);
     }
 }
 
 .submit-failure {
     @extend %message;
-    color: $color-danger;
+    color: var(--color-danger);
 }
