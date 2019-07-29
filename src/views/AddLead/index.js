@@ -169,12 +169,15 @@ const requests = {
             sourceType: 'website',
         }),
         schemaName: 'array.lead',
+        /*
+         * Commented out because this would save only id and project
         query: {
             fields: [
                 'id',
                 'project',
             ],
         },
+        */
         onSuccess: ({
             props: { currentTabId },
             params,
