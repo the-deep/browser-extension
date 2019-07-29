@@ -81,7 +81,7 @@ const navbarTitle = {
 };
 
 const notAuthenticatedMessage = 'You need to log in to the DEEP first';
-const loadingMessage = 'Initalizing...';
+const loadingMessage = 'Initializing...';
 
 const informationIcon = 'ion-ios-information-outline';
 const closeIcon = 'ion-ios-close-outline';

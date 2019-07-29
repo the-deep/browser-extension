@@ -2,10 +2,10 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
+import { isDefined } from '@togglecorp/fujs';
 import Faram, {
     requiredCondition,
     urlCondition,
-    isDefined,
 } from '@togglecorp/faram';
 
 import PrimaryButton from '#rsca/Button/PrimaryButton';
@@ -243,18 +243,6 @@ class AddLead extends React.PureComponent {
                 ],
                 website: [requiredCondition],
             },
-            /*
-            validation: (value) => {
-                const errors = [];
-                if (!value || !value.project) {
-                    return errors;
-                }
-                if (value.project.length <= 0) {
-                    errors.push('At least one project should be selected');
-                }
-                return errors;
-            },
-            */
         };
     }
 

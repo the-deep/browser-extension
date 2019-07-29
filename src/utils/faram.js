@@ -5,6 +5,8 @@ export const alterResponseErrorToFaramError = (e) => {
         errors = e.reduce(
             (acc, error) => {
                 const {
+                    // eslint-disable-next-line no-unused-vars
+                    internalNonFieldErrors = [],
                     nonFieldErrors = [],
                     ...formFieldErrors
                 } = error;
@@ -33,6 +35,8 @@ export const alterResponseErrorToFaramError = (e) => {
     }
 
     const {
+        // eslint-disable-next-line no-unused-vars
+        internalNonFieldErrors = [],
         nonFieldErrors = [],
         ...formFieldErrorList
     } = errors;
