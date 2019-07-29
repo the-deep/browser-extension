@@ -79,10 +79,10 @@ const dict = new Dict(
 );
 
 [
-    ...token,
-    ...leadAdd,
     ...basicTypeSchemas,
     ...userDefinedSchemas,
+    ...token,
+    ...leadAdd,
 ].forEach(({ name, schema }) => dict.put(name, schema));
 
 export default dict;
