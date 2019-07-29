@@ -9,7 +9,9 @@
     "sideEffects": false,
     "scripts": {
         "start": "webpack --progress --mode development --config config/webpack.dev.js --env.NODE_ENV=development",
-        "build": "webpack --mode production --config config/webpack.prod.js --env.NODE_ENV=production"
+        "start-as-prod": "webpack --progress --mode development --config config/webpack.dev.js --env.NODE_ENV=development --env.REACT_APP_RAVL_WARNING=disable --env.REACT_APP_LOCALHOST_SUPPORT=disable",
+        "build": "webpack --mode production --config config/webpack.prod.js --env.NODE_ENV=production --env.REACT_APP_RAVL_WARNING=disable --env.REACT_APP_LOCALHOST_SUPPORT=disable",
+        "build-as-dev": "webpack --mode production --config config/webpack.prod.js --env.NODE_ENV=production"
     },
     "devDependencies": {
         "@babel/core": "^7.0.0-beta.46",

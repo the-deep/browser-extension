@@ -7,6 +7,8 @@ import { styleProperties } from '#constants';
 import App from './App';
 import store from './store';
 
+console.warn('Environment:', process.env);
+
 export default class Root extends React.PureComponent {
     constructor(props) {
         super(props);

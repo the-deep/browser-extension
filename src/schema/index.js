@@ -72,11 +72,10 @@ const userDefinedSchemas = [];
     userDefinedSchemas.push({ name, schema });
 }
 
-
-const isBeta = process.env.REACT_APP_DEEP_ENVIRONMENT === 'beta';
-const dict = new Dict(
-    isBeta ? { warning: false } : { warning: true },
-);
+const enableLogging = process.env.REACT_APP_RAVL_WARNING !== 'disable';
+const dict = new Dict({
+    warning: enableLogging,
+});
 
 [
     ...basicTypeSchemas,
