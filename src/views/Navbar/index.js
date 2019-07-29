@@ -24,7 +24,7 @@ Navbar.propTypes = {
 };
 
 Navbar.defaultProps = {
-    className: '',
+    className: undefined,
     rightComponent: undefined,
 };
 

@@ -1,5 +1,8 @@
 import Dict, { basicTypes } from '@togglecorp/ravl';
 
+import token from './token';
+import leadAdd from './leadAdd';
+
 const basicTypeSchemas = basicTypes.map(entry => ({ name: entry.doc.name, schema: entry }));
 
 const userDefinedSchemas = [];
@@ -76,6 +79,8 @@ const dict = new Dict(
 );
 
 [
+    ...token,
+    ...leadAdd,
     ...basicTypeSchemas,
     ...userDefinedSchemas,
 ].forEach(({ name, schema }) => dict.put(name, schema));

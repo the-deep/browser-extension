@@ -56,6 +56,9 @@ const propTypes = {
     clearDomainData: PropTypes.func.isRequired,
     clearLeadOptions: PropTypes.func.isRequired,
     clearProjectList: PropTypes.func.isRequired,
+    requests: PropTypes.shape({
+        tokenRefreshRequest: PropTypes.object.isRequired,
+    }).isRequired,
 };
 
 const defaultProps = {
@@ -95,6 +98,7 @@ const requests = {
         url: '/token/refresh/',
         method: methods.POST,
         body: ({ params }) => ({ refresh: (params.token || {}).refresh }),
+        schemaName: 'token',
         onSuccess: ({
             props: { setToken, token },
             response,

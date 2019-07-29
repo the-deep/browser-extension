@@ -7,13 +7,15 @@ import Faram, {
     urlCondition,
 } from '@togglecorp/faram';
 
-import DateInput from '#rsci/DateInput';
+import PrimaryButton from '#rsca/Button/PrimaryButton';
 import Icon from '#rscg/Icon';
+import DateInput from '#rsci/DateInput';
 import MultiSelectInput from '#rsci/MultiSelectInput';
+import NonFieldErrors from '#rsci/NonFieldErrors';
 import SelectInput from '#rsci/SelectInput';
 import TextInput from '#rsci/TextInput';
-import PrimaryButton from '#rsca/Button/PrimaryButton';
 import LoadingAnimation from '#rscv/LoadingAnimation';
+
 import {
     RequestCoordinator,
     createRequestClient,
@@ -107,6 +109,7 @@ const requests = {
         method: methods.POST,
         onPropsChanged: ['currentTabId'],
         onMount: ({ props: { currentTabId } }) => currentTabId && currentTabId.length > 0,
+        schemaName: 'webInfo',
         onSuccess: ({ params, response }) => {
             params.fillWebInfo(response);
         },
@@ -114,6 +117,7 @@ const requests = {
     leadOptionsRequest: {
         url: '/lead-options/',
         method: methods.GET,
+        schemaName: 'leadOptions',
         query: ({ props: { inputValues } }) => ({
             project: inputValues.project,
             fields: [
@@ -127,20 +131,15 @@ const requests = {
                 prevProps: { inputValues: prevInputValues = {} },
             }) => (
                 inputValues.project !== prevInputValues.project
+                && inputValues.project
+                && inputValues.project.length > 0
             ),
         },
         onMount: ({
             props: {
                 inputValues: { project } = {},
-                setLeadOptions,
             },
-        }) => {
-            if (!project || project.length <= 0) {
-                setLeadOptions({ leadOptions: emptyObject });
-                return false;
-            }
-            return true;
-        },
+        }) => project && project.length > 0,
         onSuccess: ({ props, params, response }) => {
             props.setLeadOptions({ leadOptions: response });
             params.fillExtraInfo();
@@ -148,6 +147,7 @@ const requests = {
     },
     projectsListRequest: {
         url: '/projects/member-of/',
+        schemaName: 'projectsList',
         query: {
             fields: [
                 'id',
@@ -167,6 +167,13 @@ const requests = {
             ...params.values,
             sourceType: 'website',
         }),
+        schemaName: 'array.lead',
+        query: {
+            fields: [
+                'id',
+                'project',
+            ],
+        },
         onSuccess: ({
             props: { currentTabId },
             params,
@@ -235,7 +242,31 @@ class AddLead extends React.PureComponent {
                 ],
                 website: [requiredCondition],
             },
+            /*
+            validation: (value) => {
+                const errors = [];
+                if (!value || !value.project) {
+                    return errors;
+                }
+                if (value.project.length <= 0) {
+                    errors.push('At least one project should be selected');
+                }
+                return errors;
+            },
+            */
         };
+    }
+
+    componentWillMount() {
+        const {
+            inputValues: { project },
+            setLeadOptions,
+        } = this.props;
+
+        const moreThanOneProject = project && project.length > 0;
+        if (!moreThanOneProject) {
+            setLeadOptions({ leadOptions: emptyObject });
+        }
     }
 
     fillExtraInfo = () => {
@@ -471,7 +502,7 @@ class AddLead extends React.PureComponent {
         <div className={styles.submitFailure}>
             <Icon
                 className={styles.icon}
-                name="close"
+                name="closeCircle"
             />
             <div className={styles.message}>
                 { leadSubmitFailureMessage }
@@ -522,14 +553,13 @@ class AddLead extends React.PureComponent {
             return <FailureMessage />;
         }
 
-        const pending = pendingProjectList
-            || pendingLeadOptions
+        const disabled = pendingProjectList
             || pendingWebInfo
             || pendingLeadCreate;
 
         return (
             <div className={styles.addLead}>
-                { pending && <LoadingAnimation /> }
+                { disabled && <LoadingAnimation /> }
                 <Faram
                     className={styles.inputs}
                     onChange={this.handleFaramChange}
@@ -538,15 +568,15 @@ class AddLead extends React.PureComponent {
                     schema={this.schema}
                     error={faramErrors}
                     value={inputValues}
-                    pending={pending}
+                    disabled={disabled}
                 >
+                    <NonFieldErrors faramElement />
                     <MultiSelectInput
                         faramElementName="project"
                         label={projectInputLabel}
                         options={projects}
                         keySelector={projectKeySelector}
                         labelSelector={projectLabelSelector}
-                        hideClearAllButton
                     />
                     <TextInput
                         faramElementName="title"
@@ -563,6 +593,7 @@ class AddLead extends React.PureComponent {
                         keySelector={keySelector}
                         labelSelector={labelSelector}
                         renderEmpty={renderEmpty}
+                        disabled={pendingLeadOptions || disabled}
                     />
                     <SelectInput
                         faramElementName="assignee"
@@ -571,6 +602,7 @@ class AddLead extends React.PureComponent {
                         keySelector={keySelector}
                         labelSelector={labelSelector}
                         renderEmpty={renderEmpty}
+                        disabled={pendingLeadOptions || disabled}
                     />
                     <DateInput
                         faramElementName="publishedOn"
@@ -587,7 +619,7 @@ class AddLead extends React.PureComponent {
                     <div className={styles.actionButtons}>
                         <PrimaryButton
                             type="submit"
-                            disabled={pending}
+                            pending={pendingLeadCreate}
                         >
                             { submitButtonTitle }
                         </PrimaryButton>

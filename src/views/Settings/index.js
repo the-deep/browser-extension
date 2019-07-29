@@ -7,7 +7,7 @@ import Faram, {
 } from '@togglecorp/faram';
 
 import TextInput from '#rsci/TextInput';
-import SelectInput from '#rsci/SelectInput';
+import SegmentInput from '#rsci/SegmentInput';
 
 import PrimaryButton from '#rsca/Button/PrimaryButton';
 
@@ -230,13 +230,12 @@ class Settings extends React.PureComponent {
                     value={inputValues}
                 >
                     <div className={styles.inputs}>
-                        <SelectInput
+                        <SegmentInput
                             className={styles.input}
                             label={serverSelectInputTitle}
                             placeholder={serverSelectInputPlaceholder}
                             faramElementName="server"
                             options={this.serverOptions}
-                            hideClearButton
                             keySelector={keySelector}
                             labelSelector={labelSelector}
                         />

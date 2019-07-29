@@ -1,5 +1,6 @@
 import {
     isDefined,
+    isNotDefined,
     isObject,
     isList,
 } from '@togglecorp/fujs';
@@ -26,7 +27,7 @@ export const sanitizeResponse = (data) => {
             // This was:
             // if (newEntry) {
             // But it failed when an empty string or 0 was returned.
-            if (newEntry !== null && newEntry !== undefined) {
+            if (isNotDefined(newEntry)) {
                 newData = {
                     ...newData,
                     [k]: newEntry,
