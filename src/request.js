@@ -7,12 +7,19 @@ import {
 } from '@togglecorp/react-rest-request';
 
 import {
-    getApiEndpoint,
-    getWebEndpoint,
-} from '#config/rest';
+    webServerAddressSelector,
+    apiServerAddressSelector,
+    tokenSelector,
+} from '#redux';
+
+import store from '#store';
 
 import schema from '#schema';
-import { tokenSelector } from '#redux';
+
+export const getWebServerAddress = () => webServerAddressSelector(store.getState());
+export const getApiServerAddress = () => apiServerAddressSelector(store.getState());
+export const getApiEndpoint = () => (`${getApiServerAddress()}/api/v1`);
+export const getWebEndpoint = getWebServerAddress;
 
 const alterResponseErrorToFaramError = (e) => {
     let errors = e;
