@@ -2,14 +2,18 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
-import { isDefined } from '@togglecorp/fujs';
+import {
+    _cs,
+    isDefined,
+} from '@togglecorp/fujs';
 import Faram, {
     requiredCondition,
     urlCondition,
 } from '@togglecorp/faram';
 
-import PrimaryButton from '#rsca/Button/PrimaryButton';
 import Icon from '#rscg/Icon';
+import Button from '#rsca/Button';
+import PrimaryButton from '#rsca/Button/PrimaryButton';
 import DateInput from '#rsci/DateInput';
 import MultiSelectInput from '#rsci/MultiSelectInput';
 import NonFieldErrors from '#rsci/NonFieldErrors';
@@ -64,6 +68,7 @@ const mapDispatchToProps = dispatch => ({
 });
 
 const propTypes = {
+    className: PropTypes.string,
     uiState: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
     inputValues: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
     currentTabId: PropTypes.string.isRequired,
@@ -86,6 +91,7 @@ const propTypes = {
 };
 
 const defaultProps = {
+    className: undefined,
     currentUserId: undefined,
 };
 
@@ -100,6 +106,7 @@ const publishedOnInputLabel = 'Published on';
 const assigneeInputLabel = 'Assignee';
 const confidentialityInputLabel = 'Confidentiality';
 const sourceInputLabel = 'Publisher';
+const authorInputLabel = 'Author';
 const titleInputLabel = 'Title';
 const projectInputLabel = 'Project';
 
@@ -237,6 +244,7 @@ class AddLead extends React.PureComponent {
                 project: [requiredCondition],
                 title: [requiredCondition],
                 source: [requiredCondition],
+                author: [requiredCondition],
                 confidentiality: [requiredCondition],
                 assignee: [requiredCondition],
                 publishedOn: [requiredCondition],
@@ -317,6 +325,9 @@ class AddLead extends React.PureComponent {
         if (webInfo.source && !inputValues.source) {
             values.source = webInfo.source;
         }
+        if (webInfo.author && !inputValues.author) {
+            values.author = webInfo.author;
+        }
         if (webInfo.website && !inputValues.website) {
             values.website = webInfo.website;
         }
@@ -330,6 +341,31 @@ class AddLead extends React.PureComponent {
         const newValues = {
             ...inputValues,
             ...values,
+        };
+
+        const newUiState = {
+            ...uiState,
+            pristine: false,
+        };
+
+        updateInputValues({
+            tabId: currentTabId,
+            values: newValues,
+            newUiState,
+        });
+    }
+
+    handleSameAsPublisherButtonClick = () => {
+        const {
+            currentTabId,
+            updateInputValues,
+            inputValues,
+            uiState,
+        } = this.props;
+
+        const newValues = {
+            ...inputValues,
+            author: inputValues.source,
         };
 
         const newUiState = {
@@ -513,6 +549,7 @@ class AddLead extends React.PureComponent {
             inputValues,
             uiState,
             projects,
+            className,
             leadOptions: {
                 assignee = [],
                 confidentiality = [],
@@ -551,7 +588,7 @@ class AddLead extends React.PureComponent {
             || pendingLeadCreate;
 
         return (
-            <div className={styles.addLead}>
+            <div className={_cs(styles.addLead, className)}>
                 { disabled && <LoadingAnimation /> }
                 <Faram
                     className={styles.inputs}
@@ -579,6 +616,18 @@ class AddLead extends React.PureComponent {
                         faramElementName="source"
                         label={sourceInputLabel}
                     />
+                    <div className={styles.authorContainer} >
+                        <TextInput
+                            faramElementName="author"
+                            label={authorInputLabel}
+                        />
+                        <Button
+                            iconName="copy"
+                            className={styles.sameAsPublisherButton}
+                            onClick={this.handleSameAsPublisherButtonClick}
+                            transparent
+                        />
+                    </div>
                     <SelectInput
                         faramElementName="confidentiality"
                         label={confidentialityInputLabel}

@@ -1,4 +1,5 @@
 const iconNames = {
+    copy: 'ion-ios-copy-outline',
     settings: 'ion-android-settings',
     back: 'ion-android-arrow-back',
     checkmarkCircle: 'ion-ios-checkmark-outline',

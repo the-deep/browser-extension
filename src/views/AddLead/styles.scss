@@ -8,11 +8,29 @@
 
     .inputs {
         flex-grow: 1;
-        padding: var(--spacing-small) var(--spacing-large);
+        padding: var(--spacing-extra-small) var(--spacing-large);
         overflow-y: auto;
 
         >* {
             margin: var(--spacing-small-alt) 0;
+        }
+    }
+
+    .author-container {
+        position: relative;
+
+        .same-as-publisher-button {
+            display: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 0;
+        }
+
+        &:hover {
+            .same-as-publisher-button {
+                display: block;
+            }
         }
     }
 
