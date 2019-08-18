@@ -109,6 +109,7 @@ const sourceInputLabel = 'Publisher';
 const authorInputLabel = 'Author';
 const titleInputLabel = 'Title';
 const projectInputLabel = 'Project';
+const sameAsPublisherButtonTitle = 'Same as publisher';
 
 const requests = {
     webInfoRequest: {
@@ -622,6 +623,7 @@ class AddLead extends React.PureComponent {
                             label={authorInputLabel}
                         />
                         <Button
+                            title={sameAsPublisherButtonTitle}
                             iconName="copy"
                             className={styles.sameAsPublisherButton}
                             onClick={this.handleSameAsPublisherButtonClick}
