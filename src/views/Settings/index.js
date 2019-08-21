@@ -115,7 +115,7 @@ class Settings extends React.PureComponent {
             },
             alpha: {
                 web: 'https://alpha.thedeep.io',
-                api: 'https://api.deeper.togglecorp.com',
+                api: 'https://api.alpha.thedeep.io',
             },
             localhost: {
                 web: 'http://localhost:3000',
