@@ -55,6 +55,7 @@ const labelSelector = d => d.title;
 
 class Settings extends React.PureComponent {
     static propTypes = propTypes;
+
     static defaultProps = defaultProps;
 
     constructor(props) {

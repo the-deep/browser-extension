@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 
 import {
     createRequestCoordinator,
-    methods,
+    createRequestClient as createRequestClientFromLib,
+    methods as methodsFromLib,
 } from '@togglecorp/react-rest-request';
 
 import {
@@ -89,7 +90,7 @@ const CustomRequestCoordinator = createRequestCoordinator({
         } = data;
 
         return {
-            method: method || methods.GET,
+            method: method || methodsFromLib.GET,
             body: JSON.stringify(body),
             headers: {
                 Accept: 'application/json',
@@ -152,4 +153,5 @@ export const createUrlForBrowserExtensionPage = () => (`
     ${getWebEndpoint()}/browser-extension/
 `);
 
-export * from '@togglecorp/react-rest-request';
+export const methods = methodsFromLib;
+export const createRequestClient = createRequestClientFromLib;

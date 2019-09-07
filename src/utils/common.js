@@ -5,6 +5,8 @@ import {
     isList,
 } from '@togglecorp/fujs';
 
+
+// FIXME: this is not used
 export const forEach = (obj, func) => {
     Object.keys(obj).forEach((key) => {
         const val = obj[key];
@@ -12,6 +14,7 @@ export const forEach = (obj, func) => {
     });
 };
 
+// FIXME: this is not here
 export const sanitizeResponse = (data) => {
     if (data === null || data === undefined) {
         return undefined;

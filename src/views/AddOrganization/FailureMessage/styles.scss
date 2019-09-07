@@ -1,0 +1,27 @@
+@import '../../../stylesheets/utils';
+
+.submit-failure {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: center;
+    color: var(--color-danger);
+
+    .icon {
+        opacity: .77;
+        margin-bottom: var(--spacing-medium);
+        font-size: var(--font-size-super-large-alt);
+    }
+
+    .message {
+        opacity: .77;
+        font-size: var(--font-size-extra-large);
+    }
+
+    .description {
+        padding: var(--spacing-medium);
+        text-align: center;
+        font-size: var(--font-size-medium);
+    }
+}

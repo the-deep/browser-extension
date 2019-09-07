@@ -3,11 +3,10 @@ import React from 'react';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 
+import { iconNames } from '#constants';
+import AccentButton from '#rsca/Button/AccentButton';
 import { addIcon } from '#rscg/Icon';
 import MultiViewContainer from '#rscv/MultiViewContainer';
-import Message from '#rscv/Message';
-import AccentButton from '#rsca/Button/AccentButton';
-import { iconNames } from '#constants';
 
 import {
     setTokenAction,
@@ -27,10 +26,15 @@ import {
 } from '#request';
 
 import AddLead from '#views/AddLead';
+import AddOrganization from '#views/AddOrganization';
 import Settings from '#views/Settings';
 import Navbar from '#views/Navbar';
+import authLayer from '#views/authLayer';
 
 import styles from './styles.scss';
+
+const AuthenticatedAddLead = authLayer(AddLead);
+const AuthenticatedAddOrganization = authLayer(AddOrganization);
 
 const mapStateToProps = state => ({
     token: tokenSelector(state),
@@ -74,17 +78,13 @@ const EXTENSION_SET_TOKEN_FG_MESSAGE = 'set-token-fg';
 
 const ADD_LEAD_VIEW = 'addLead';
 const SETTINGS_VIEW = 'settings';
+const ADD_ORGANIZATION_VIEW = 'addOrganization';
 
 const navbarTitle = {
     [ADD_LEAD_VIEW]: 'Add Lead',
     [SETTINGS_VIEW]: 'Settings',
+    [ADD_ORGANIZATION_VIEW]: 'Add Organization',
 };
-
-const notAuthenticatedMessage = 'You need to log in to the DEEP first';
-const loadingMessage = 'Initializing...';
-
-const informationIcon = 'ion-ios-information-outline';
-const closeIcon = 'ion-ios-close-outline';
 
 const tokenRefreshFatalErrorMessage = 'Failed to communicate with the server';
 const tokenRefreshFailureMessage = 'Failed to refresh token';
@@ -124,6 +124,7 @@ const requests = {
 
 class App extends React.PureComponent {
     static propTypes = propTypes;
+
     static defaultProps = defaultProps;
 
     constructor(props) {
@@ -135,26 +136,96 @@ class App extends React.PureComponent {
             activeView: ADD_LEAD_VIEW,
         };
 
-        // TODO: Use rendererParams
         this.views = {
-            addLead: {
-                component: () => {
-                    const { authenticated } = this.state;
-                    if (authenticated) {
-                        return (
-                            <AddLead className={styles.addLead} />
-                        );
-                    }
+            [ADD_LEAD_VIEW]: {
+                rendererParams: () => {
+                    const {
+                        authenticated,
+                        pendingTabInfo,
+                        error,
+                    } = this.state;
+                    const {
+                        requests: {
+                            tokenRefreshRequest: {
+                                pending: pendingTokenRefresh,
+                            },
+                        },
+                    } = this.props;
 
-                    const AppMessage = this.renderMessage;
-                    return (<AppMessage />);
+                    return {
+                        className: styles.addLead,
+
+                        authenticated,
+                        pending: pendingTabInfo || pendingTokenRefresh,
+                        error,
+
+                        goToAddOrganization: this.goToAddOrganization,
+                    };
                 },
+                component: AuthenticatedAddLead,
             },
 
-            settings: {
-                component: () => (
-                    <Settings className={styles.settings} />
-                ),
+            [ADD_ORGANIZATION_VIEW]: {
+                rendererParams: () => {
+                    const {
+                        authenticated,
+                        pendingTabInfo,
+                        error,
+                    } = this.state;
+                    const {
+                        requests: {
+                            tokenRefreshRequest: {
+                                pending: pendingTokenRefresh,
+                            },
+                        },
+                    } = this.props;
+
+                    return {
+                        className: styles.addLead,
+
+                        authenticated,
+                        pending: pendingTabInfo || pendingTokenRefresh,
+                        error,
+                    };
+                },
+                component: AuthenticatedAddOrganization,
+            },
+
+            [SETTINGS_VIEW]: {
+                rendererParams: () => ({
+                    className: styles.settings,
+                }),
+                component: Settings,
+            },
+        };
+
+        this.headerViews = {
+            [ADD_LEAD_VIEW]: {
+                component: AccentButton,
+                rendererParams: () => ({
+                    transparent: true,
+                    className: styles.navButton,
+                    onClick: this.goToSettings,
+                    iconName: 'settings',
+                }),
+            },
+            [ADD_ORGANIZATION_VIEW]: {
+                component: AccentButton,
+                rendererParams: () => ({
+                    transparent: true,
+                    className: styles.navButton,
+                    onClick: this.goToAddLead,
+                    iconName: 'back',
+                }),
+            },
+            [SETTINGS_VIEW]: {
+                component: AccentButton,
+                rendererParams: () => ({
+                    transparent: true,
+                    className: styles.navButton,
+                    onClick: this.goToAddLead,
+                    iconName: 'back',
+                }),
             },
         };
     }
@@ -162,45 +233,44 @@ class App extends React.PureComponent {
     componentDidMount() {
         // set handler for message from background
         chrome.runtime.onMessage.addListener(this.handleMessageReceive);
-
-        this.getCurrentTabInfo();
+        chrome.tabs.query(currentTabQueryInfo, this.handleCurrentTabInfoQuery);
 
         const { webServerAddress } = this.props;
         if (webServerAddress) {
-            this.getTokenFromBackground(webServerAddress);
+            this.requestTokenFromBackground(webServerAddress);
         }
     }
 
     componentWillReceiveProps(nextProps) {
-        const { webServerAddress: newWebServerAddress } = nextProps;
         const {
             clearDomainData,
             clearProjectList,
             clearLeadOptions,
-            webServerAddress: oldWebServerAddress,
             requests: {
                 tokenRefreshRequest,
             },
+
+            webServerAddress: oldWebServerAddress,
+            token: oldToken,
         } = this.props;
+        const {
+            webServerAddress: newWebServerAddress,
+            token: newToken,
+        } = nextProps;
 
         if (oldWebServerAddress !== newWebServerAddress) {
             clearDomainData();
             clearProjectList();
             clearLeadOptions();
-            this.getTokenFromBackground(newWebServerAddress);
-        } else {
-            const { token: newToken } = nextProps;
-            const { token: oldToken } = this.props;
-
-            if (newToken.refresh !== oldToken.refresh) {
-                if (newToken.refresh) {
-                    tokenRefreshRequest.do({
-                        token: newToken,
-                        setAuthAndError: this.handleErrorAndAuthChange,
-                    });
-                } else {
-                    this.setState({ authenticated: false });
-                }
+            this.requestTokenFromBackground(newWebServerAddress);
+        } else if (newToken.refresh !== oldToken.refresh) {
+            if (newToken.refresh) {
+                tokenRefreshRequest.do({
+                    token: newToken,
+                    setAuthAndError: this.handleErrorAndAuthChange,
+                });
+            } else {
+                this.setState({ authenticated: false });
             }
         }
     }
@@ -209,33 +279,31 @@ class App extends React.PureComponent {
         chrome.runtime.onMessage.removeListener(this.handleMessageReceive);
     }
 
-    getTokenFromBackground = (website) => {
-        chrome.runtime.sendMessage({
-            message: EXTENSION_GET_TOKEN_MESSAGE,
-            website,
-        }, this.handleGetTokenFromBackgroundResponse);
+    requestTokenFromBackground = (website) => {
+        chrome.runtime.sendMessage(
+            {
+                message: EXTENSION_GET_TOKEN_MESSAGE,
+                website,
+            },
+            this.handleGetTokenFromBackgroundResponse,
+        );
     }
 
-    getCurrentTabInfo = () => {
-        // TODO: we don't need to always create this callback
-        const queryCallback = (tabs) => {
-            const { setCurrentTabInfo } = this.props;
+    handleCurrentTabInfoQuery = (tabs) => {
+        const { setCurrentTabInfo } = this.props;
 
-            const tab = tabs[0];
-            const {
-                url,
-                url: tabId,
-            } = tab;
+        const tab = tabs[0];
+        const {
+            url,
+            url: tabId,
+        } = tab;
 
-            setCurrentTabInfo({
-                tabId,
-                url,
-            });
+        setCurrentTabInfo({
+            tabId,
+            url,
+        });
 
-            this.setState({ pendingTabInfo: false });
-        };
-
-        chrome.tabs.query(currentTabQueryInfo, queryCallback);
+        this.setState({ pendingTabInfo: false });
     }
 
     handleGetTokenFromBackgroundResponse = (response = {}) => {
@@ -248,19 +316,20 @@ class App extends React.PureComponent {
         } = this.props;
 
         setToken({ token });
+
         if (token && token.refresh) {
             tokenRefreshRequest.do({
                 token,
                 setAuthAndError: this.handleErrorAndAuthChange,
             });
         } else {
-            this.setState({
-                pendingTabInfo: false,
-                authenticated: false,
-            });
             chrome.tabs.create({
                 url: createUrlForBrowserExtensionPage(),
                 active: false,
+            });
+            this.setState({
+                pendingTabInfo: false,
+                authenticated: false,
             });
         }
     }
@@ -301,102 +370,32 @@ class App extends React.PureComponent {
         });
     }
 
-    handleSettingsButtonClick = () => {
+    goToSettings = () => {
         this.setState({ activeView: SETTINGS_VIEW });
     }
 
-    handleBackButtonClick = () => {
+    goToAddLead = () => {
         this.setState({ activeView: ADD_LEAD_VIEW });
     }
 
-    renderMessage = () => {
-        const iconClassNames = [styles.icon];
-
-        const {
-            requests: {
-                tokenRefreshRequest: {
-                    pending: pendingTokenRefresh,
-                },
-            },
-        } = this.props;
-
-        const {
-            pendingTabInfo,
-            error,
-        } = this.state;
-
-        if (pendingTabInfo || pendingTokenRefresh) {
-            return (
-                <Message className={styles.loadingMessage}>
-                    <div className={styles.message}>
-                        { loadingMessage }
-                    </div>
-                </Message>
-            );
-        }
-
-        if (error !== undefined) {
-            iconClassNames.push(closeIcon);
-            return (
-                <Message className={styles.errorMessage}>
-                    <div className={iconClassNames.join(' ')} />
-                    <div className={styles.message}>
-                        { error }
-                    </div>
-                </Message>
-            );
-        }
-
-        iconClassNames.push(informationIcon);
-        return (
-            <Message className={styles.notAuthenticatedMessage}>
-                <div className={iconClassNames.join(' ')} />
-                <div className={styles.message}>
-                    { notAuthenticatedMessage }
-                </div>
-            </Message>
-        );
-    }
-
-    // TODO: should use MultiViewContainer
-    renderNavbarRightComponent = () => {
-        const { activeView } = this.state;
-
-        switch (activeView) {
-            case ADD_LEAD_VIEW:
-                return (
-                    <AccentButton
-                        transparent
-                        className={styles.navButton}
-                        onClick={this.handleSettingsButtonClick}
-                        iconName="settings"
-                    />
-                );
-            case SETTINGS_VIEW:
-                return (
-                    <AccentButton
-                        transparent
-                        className={styles.navButton}
-                        onClick={this.handleBackButtonClick}
-                        iconName="back"
-                    />
-                );
-            default:
-                return null;
-        }
+    goToAddOrganization = () => {
+        this.setState({ activeView: ADD_ORGANIZATION_VIEW });
     }
 
     render() {
         const { activeView } = this.state;
 
-        const NavbarRightComponent = this.renderNavbarRightComponent;
-
         return (
             <div className={styles.app}>
                 <Navbar
                     className={styles.navbar}
-                    rightComponent={NavbarRightComponent}
                     title={navbarTitle[activeView]}
+                    rightComponent={(
+                        <MultiViewContainer
+                            views={this.headerViews}
+                            active={activeView}
+                        />
+                    )}
                 />
                 <MultiViewContainer
                     views={this.views}

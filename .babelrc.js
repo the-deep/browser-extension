@@ -1,0 +1,64 @@
+module.exports = {
+    'env': {
+        'test': {
+            'plugins': [
+                'babel-plugin-dynamic-import-node',
+            ],
+        },
+    },
+    'presets': [
+        '@babel/preset-typescript',
+        ['@babel/preset-env', {
+            useBuiltIns: "usage",
+            corejs: 3,
+            debug: true,
+        }],
+        '@babel/preset-react',
+    ],
+
+    'plugins': [
+        // Reuse babel's injected headers
+        ['@babel/plugin-transform-runtime', { 'regenerator': true }],
+
+        // Stage 2
+        ['@babel/plugin-proposal-decorators', { 'legacy': true }],
+        '@babel/plugin-proposal-function-sent',
+        '@babel/plugin-proposal-export-namespace-from',
+        '@babel/plugin-proposal-numeric-separator',
+        '@babel/plugin-proposal-throw-expressions',
+
+        // Stage 3
+        '@babel/plugin-syntax-dynamic-import',
+        '@babel/plugin-syntax-import-meta',
+        ['@babel/plugin-proposal-class-properties', { 'loose': false }],
+        '@babel/plugin-proposal-json-strings',
+
+        [
+            'module-resolver',
+            {
+                'root': ['.'],
+                'extensions': ['.js', '.jsx', '.ts', '.tsx'],
+                'alias': {
+                    "#components": "./src/components",
+                    "#config": "./src/config",
+                    "#constants": "./src/constants",
+                    "#redux": "./src/redux",
+                    "#request": "./src/request",
+                    "#requests": "./src/requests",
+                    "#rest": "./src/rest",
+                    "#schema": "./src/schema",
+                    "#store": "./src/store",
+                    "#utils": "./src/utils",
+                    "#rsca": "./src/vendor/react-store/components/Action",
+                    "#rscg": "./src/vendor/react-store/components/General",
+                    "#rsci": "./src/vendor/react-store/components/Input",
+                    "#rscv": "./src/vendor/react-store/components/View",
+                    "#rscz": "./src/vendor/react-store/components/Visualization",
+                    "#rsk": "./src/vendor/react-store/constants",
+                    "#rsu": "./src/vendor/react-store/utils",
+                    "#views": "./src/views",
+                },
+            },
+        ],
+    ],
+};

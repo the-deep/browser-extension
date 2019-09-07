@@ -3,32 +3,45 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-
+const StylishPlugin = require('eslint/lib/cli-engine/formatters/stylish');
+// const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+const dotenv = require('dotenv').config({
+    path: '.env',
+});
 const getEnvVariables = require('./env.js');
 
 const appBase = process.cwd();
+const eslintFile = path.resolve(appBase, '.eslintrc-loader.js');
 const appSrc = path.resolve(appBase, 'src/');
 const appDist = path.resolve(appBase, 'build/');
-const appIndexJs = path.resolve(appBase, 'src/index.js');
-const appIndexHtml = path.resolve(appBase, 'public/index.html');
+const publicSrc = path.resolve(appBase, 'public/');
+const appIndexJs = path.resolve(appSrc, 'index.js');
+const appIndexHtml = path.resolve(publicSrc, 'index.html');
 
 module.exports = (env) => {
-    const ENV_VARS = getEnvVariables(env);
+    const ENV_VARS = { ...dotenv.pared, ...getEnvVariables(env) };
+
+    console.warn(ENV_VARS);
 
     return {
         entry: appIndexJs,
         output: {
             path: appDist,
             publicPath: '/',
-            chunkFilename: 'js/[name].[chunkhash].js',
-            filename: 'js/[name].[chunkhash].js',
+            chunkFilename: 'js/[name].[hash].js',
+            filename: 'js/[name].[hash].js',
             sourceMapFilename: 'sourcemaps/[file].map',
+            pathinfo: false,
+        },
+
+        resolve: {
+            extensions: ['.js', '.jsx', '.ts', '.tsx'],
         },
 
         mode: 'development',
-        devtool: 'cheap-module-source-map',
+
         performance: {
             hints: 'warning',
         },
@@ -39,6 +52,12 @@ module.exports = (env) => {
             errorDetails: true,
             hash: true,
         },
+        // NOTE: cannot use 'cheap-module-eval-source-map' as chrome blocks it
+        devtool: 'cheap-module-source-map',
+        node: {
+            fs: 'empty',
+        },
+
         watch: true,
         watchOptions: {
             ignored: '/node_modules/',
@@ -47,11 +66,20 @@ module.exports = (env) => {
         module: {
             rules: [
                 {
-                    test: /\.(js|jsx)$/,
+                    test: /\.(js|jsx|ts|tsx)$/,
                     include: appSrc,
                     use: [
+                        'cache-loader',
                         'babel-loader',
-                        'eslint-loader',
+                        {
+                            loader: 'eslint-loader',
+                            options: {
+                                configFile: eslintFile,
+                                // NOTE: adding this because eslint 6 cannot find this
+                                // https://github.com/webpack-contrib/eslint-loader/issues/271
+                                formatter: StylishPlugin,
+                            },
+                        },
                     ],
                 },
                 {
@@ -63,14 +91,19 @@ module.exports = (env) => {
                             loader: require.resolve('css-loader'),
                             options: {
                                 importLoaders: 1,
-                                modules: true,
-                                camelCase: true,
-                                localIdentName: '[name]_[local]_[hash:base64]',
-                                minimize: true,
+                                modules: {
+                                    localIdentName: '[name]_[local]_[hash:base64]',
+                                },
+                                localsConvention: 'camelCase',
                                 sourceMap: true,
                             },
                         },
-                        require.resolve('sass-loader'),
+                        {
+                            loader: require.resolve('sass-loader'),
+                            options: {
+                                sourceMap: true,
+                            },
+                        },
                     ],
                 },
                 {
@@ -96,19 +129,25 @@ module.exports = (env) => {
                 allowAsyncCycles: false,
                 cwd: appBase,
             }),
-            new CleanWebpackPlugin([appDist], { root: appBase }),
+            // Remove build folder anyway
+            new CleanWebpackPlugin({
+                cleanStaleWebpackAssets: false,
+            }),
+            new CopyWebpackPlugin([
+                { context: publicSrc, to: appDist, from: 'background.js' },
+                { context: publicSrc, to: appDist, from: 'deep-logo.png' },
+                { context: publicSrc, to: appDist, from: 'manifest.json' },
+            ]),
             new HtmlWebpackPlugin({
                 template: appIndexHtml,
                 filename: './index.html',
+                title: 'DEEP 2: Add Lead',
                 chunksSortMode: 'none',
             }),
             new MiniCssExtractPlugin({
-                filename: 'css/[name].[hash].css',
-                chunkFilename: 'css/[id].[hash].css',
+                filename: 'css/[name].css',
+                chunkFilename: 'css/[id].css',
             }),
-            new CopyWebpackPlugin([
-                { from: 'assets', to: '.' },
-            ]),
         ],
     };
 };

@@ -26,11 +26,10 @@ export default class Root extends React.PureComponent {
     }
 
     render() {
-        if (!this.state.rehydrated) {
+        const { rehydrated } = this.state;
+        if (!rehydrated) {
             // NOTE: showing empty div, this lasts for a fraction of a second
-            return (
-                <div />
-            );
+            return (<div />);
         }
 
         return (

@@ -1,0 +1,27 @@
+%app-message {
+    flex-direction: column;
+    flex-grow: 1;
+    height: auto;
+
+    .icon {
+        margin-bottom: var(--spacing-large);
+        font-size: var(--font-size-ultra-large-alt);
+    }
+
+    .message {
+        font-size: var(--font-size-extra-large);
+    }
+}
+
+.loading-message {
+    @extend %app-message;
+}
+
+.error-message {
+    @extend %app-message;
+    color: var(--color-danger);
+}
+
+.not-authenticated-message {
+    @extend %app-message;
+}
