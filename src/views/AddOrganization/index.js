@@ -1,16 +1,12 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { compose } from 'redux';
-// import { connect } from 'react-redux';
 import { _cs } from '@togglecorp/fujs';
 import Faram, {
     requiredCondition,
     urlCondition,
 } from '@togglecorp/faram';
 
-// import { UploadBuilder } from '#rsu/upload';
-// import Label from '#rsci/Label';
-// import ImageInput from '#rsci/FileInput/ImageInput';
 import PrimaryButton from '#rsca/Button/PrimaryButton';
 import NonFieldErrors from '#rsci/NonFieldErrors';
 import SelectInput from '#rsci/SelectInput';
@@ -20,15 +16,9 @@ import LoadingAnimation from '#rscv/LoadingAnimation';
 import {
     RequestCoordinator,
     createRequestClient,
-    // getApiEndpoint,
 } from '#request';
 
-/*
-import {
-    tokenSelector,
-} from '#redux';
-*/
-
+import SuccessMessage from './SuccessMessage';
 import requests from './requests';
 import styles from './styles.scss';
 
@@ -37,20 +27,14 @@ const submitButtonTitle = 'submit';
 const propTypes = {
     requests: PropTypes.shape({
         addOrganizationRequest: PropTypes.object.isRequired,
+        organizationTypesRequest: PropTypes.object.isRequired,
     }).isRequired,
     className: PropTypes.string,
-    // token: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
 };
 
 const defaultProps = {
     className: undefined,
 };
-
-/*
-const mapStateToProps = state => ({
-    token: tokenSelector(state),
-});
-*/
 
 class AddOrganization extends React.PureComponent {
     static propTypes = propTypes;
@@ -68,7 +52,8 @@ class AddOrganization extends React.PureComponent {
             faramErrors: {},
             faramValues: {},
             pristine: true,
-            pendingLogoUpload: false,
+
+            organizationSubmitted: false,
         };
 
         this.schema = {
@@ -77,8 +62,7 @@ class AddOrganization extends React.PureComponent {
                 shortName: [requiredCondition],
                 // longName: [requiredCondition],
                 url: [urlCondition, requiredCondition],
-                organizationType: [],
-                // logo: [],
+                organizationType: [requiredCondition],
             },
         };
     }
@@ -116,12 +100,18 @@ class AddOrganization extends React.PureComponent {
     }
 
     handleOrganizationCreateSuccess = (organization) => {
-        console.warn(organization);
+        // TODO:
+        // 1. set this to either publisher or author later
+        // 2. add this organization to organization list
+        this.setState({
+            organizationSubmitted: true,
+        });
     }
 
     handleOrganizationCreateFailure = (faramErrors) => {
         this.setState({
             faramErrors,
+            organizationSubmitted: false,
         });
     }
 
@@ -130,71 +120,19 @@ class AddOrganization extends React.PureComponent {
             faramErrors: {
                 $internal: ['Some error occurred! Please check your internet connectivity.'],
             },
+            organizationSubmitted: false,
         });
     }
-
-    /*
-    handleImageInputChange = (files, { invalidFiles }) => {
-        if (invalidFiles > 0) {
-            console.error('Invalid file selected');
-        }
-
-        if (files.length <= 0) {
-            console.warn('No files selected');
-            return;
-        }
-
-        const file = files[0];
-
-        if (this.logoUploader) {
-            this.logoUploader.stop();
-        }
-        // createParamsForFileUpload({ is_public: true });
-        this.logoUploader = new UploadBuilder()
-            .file(file)
-            .url(() => `${getApiEndpoint()}/files/`)
-            .params(() => {
-                const {
-                    token: { access },
-                } = this.props;
-                return {
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json; charset=utf-8',
-                        Authorization: access ? `Bearer ${access}` : undefined,
-                    },
-                    body: {
-                        is_public: true, // eslint-disable-line @typescript-eslint/camelcase
-                    },
-                };
-            })
-            .preLoad(() => this.setState({ pendingLogoUpload: true }))
-            .postLoad(() => this.setState({ pendingLogoUpload: false }))
-            .success((response) => {
-                this.setState(state => ({
-                    faramValues: {
-                        ...state.faramValues,
-                        logo: response.id,
-                    },
-                }));
-            })
-            .failure((response) => {
-                console.error(response);
-            })
-            .fatal((response) => {
-                console.error(response);
-            })
-            .build();
-
-        this.logoUploader.start();
-    }
-    */
 
     render() {
         const {
             requests: {
                 addOrganizationRequest: {
                     pending: pendingAddOrganizationRequest,
+                },
+                organizationTypesRequest: {
+                    pending: pendingOrganizationTypesRequset,
+                    response: organizationTypesResponse,
                 },
             },
             className,
@@ -204,12 +142,21 @@ class AddOrganization extends React.PureComponent {
             faramValues,
             faramErrors,
             pristine,
-            pendingLogoUpload,
+            organizationSubmitted,
         } = this.state;
 
-        const organizationTypeList = [];
+        if (organizationSubmitted) {
+            return (
+                <SuccessMessage />
+            );
+        }
 
-        const disabled = pendingLogoUpload || pendingAddOrganizationRequest;
+        let organizationTypeList;
+        if (organizationTypesResponse) {
+            organizationTypeList = organizationTypesResponse.results;
+        }
+
+        const disabled = pendingAddOrganizationRequest || pendingOrganizationTypesRequset;
 
         return (
             <div className={_cs(styles.addOrganization, className)}>
@@ -263,7 +210,6 @@ class AddOrganization extends React.PureComponent {
 }
 
 export default compose(
-    // connect(mapStateToProps),
     RequestCoordinator,
     createRequestClient(requests),
 )(AddOrganization);

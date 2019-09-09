@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import {
     _cs,
     isFalsyString,
+    unique,
 } from '@togglecorp/fujs';
 import Faram, {
     requiredCondition,
@@ -111,6 +112,16 @@ const mapDispatchToProps = dispatch => ({
     setLeadOptions: params => dispatch(setLeadOptionsAction(params)),
 });
 
+function mergeLists(foo, bar) {
+    return unique(
+        [
+            ...foo,
+            ...bar,
+        ],
+        item => item.id,
+    );
+}
+
 class AddLead extends React.PureComponent {
     static propTypes = propTypes;
 
@@ -139,10 +150,11 @@ class AddLead extends React.PureComponent {
         } = this.props;
 
         this.state = {
-            leadSubmittedSuccessfully: undefined,
+            leadSubmitted: false,
             targetUrl: undefined,
 
             searchedOrganizations: [],
+            // Organizations filled by web-info-extract and lead-options
             organizations: [],
         };
 
@@ -186,7 +198,6 @@ class AddLead extends React.PureComponent {
     }
 
     setOrganizations = (organizations) => {
-        console.warn(organizations);
         this.setState({ organizations });
     }
 
@@ -235,6 +246,19 @@ class AddLead extends React.PureComponent {
             uiState,
             updateInputValues,
         } = this.props;
+
+        const newOrgs = [];
+        if (webInfo.source) {
+            newOrgs.push(webInfo.source);
+        }
+        if (webInfo.author) {
+            newOrgs.push(webInfo.author);
+        }
+        if (newOrgs.length > 0) {
+            this.setState(state => ({
+                organizations: mergeLists(state.organizations, newOrgs),
+            }));
+        }
 
         updateInputValues({
             tabId: currentTabId,
@@ -321,7 +345,7 @@ class AddLead extends React.PureComponent {
         const { clearInputValue } = this.props;
 
         this.setState({
-            leadSubmittedSuccessfully: true,
+            leadSubmitted: true,
             targetUrl,
         });
 
@@ -335,7 +359,7 @@ class AddLead extends React.PureComponent {
         } = this.props;
 
         this.setState({
-            leadSubmittedSuccessfully: false,
+            leadSubmitted: false,
             targetUrl: undefined,
         });
 
@@ -356,7 +380,7 @@ class AddLead extends React.PureComponent {
         } = this.props;
 
         this.setState({
-            leadSubmittedSuccessfully: false,
+            leadSubmitted: false,
             targetUrl: undefined,
         });
 
@@ -377,7 +401,7 @@ class AddLead extends React.PureComponent {
             searchedOrganizations,
             organizations,
 
-            leadSubmittedSuccessfully,
+            leadSubmitted,
             targetUrl,
         } = this.state;
 
@@ -400,7 +424,7 @@ class AddLead extends React.PureComponent {
             goToAddOrganization,
         } = this.props;
 
-        if (leadSubmittedSuccessfully) {
+        if (leadSubmitted) {
             return (
                 <SuccessMessage
                     targetUrl={targetUrl}

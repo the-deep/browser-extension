@@ -30,13 +30,11 @@ export function fillWebInfo(inputValues, webInfo) {
     if (!values.url && webInfo.url) {
         values.url = webInfo.url;
     }
-    /*
     if (!values.source && webInfo.source) {
-        values.source = webInfo.source;
+        values.source = webInfo.source.id;
     }
     if (!values.author && webInfo.author) {
-        values.author = webInfo.author;
+        values.author = webInfo.author.id;
     }
-    */
     return values;
 }

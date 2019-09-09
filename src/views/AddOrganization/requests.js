@@ -1,6 +1,11 @@
 import { methods } from '#request';
 
 const requests = {
+    organizationTypesRequest: {
+        url: '/organization-types/',
+        method: methods.GET,
+        onMount: true,
+    },
     addOrganizationRequest: {
         url: '/organizations/',
         method: methods.POST,
