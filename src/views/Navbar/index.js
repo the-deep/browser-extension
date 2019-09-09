@@ -20,7 +20,7 @@ const Navbar = ({
 Navbar.propTypes = {
     title: PropTypes.string.isRequired,
     className: PropTypes.string,
-    rightComponent: PropTypes.func,
+    rightComponent: PropTypes.node,
 };
 
 Navbar.defaultProps = {

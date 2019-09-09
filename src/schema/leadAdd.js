@@ -1,6 +1,77 @@
 const leadAddSchema = [];
 
 {
+    const name = 'keyValue';
+    const schema = {
+        doc: {
+            name: 'keyValue',
+            description: 'Schema for key-value',
+        },
+        fields: {
+            key: { type: 'string' },
+            value: { type: 'string' },
+        },
+    };
+    leadAddSchema.push({ name, schema });
+}
+
+{
+    const name = 'confidentiality';
+    const schema = {
+        doc: {
+            name: 'confidentiality',
+            description: 'Schema for confidentiality',
+        },
+        extends: 'keyValue',
+    };
+    leadAddSchema.push({ name, schema });
+}
+
+{
+    const name = 'status';
+    const schema = {
+        doc: {
+            name: 'status',
+            description: 'Schema for status',
+        },
+        extends: 'keyValue',
+    };
+    leadAddSchema.push({ name, schema });
+}
+
+{
+    const name = 'member';
+    const schema = {
+        doc: {
+            name: 'member',
+            description: 'Schema for member',
+        },
+        fields: {
+            id: { type: 'uint', required: true },
+            email: { type: 'string', required: true },
+            displayName: { type: 'string', required: true },
+            displayPicture: { type: 'uint' },
+        },
+    };
+    leadAddSchema.push({ name, schema });
+}
+
+{
+    const name = 'organization';
+    const schema = {
+        doc: {
+            name: 'organization',
+            description: 'Schema for organization',
+        },
+        fields: {
+            id: { type: 'uint' },
+            title: { type: 'string' },
+        },
+    };
+    leadAddSchema.push({ name, schema });
+}
+
+{
     const name = 'webInfo';
     const schema = {
         doc: {
@@ -12,7 +83,10 @@ const leadAddSchema = [];
             date: { type: 'string' },
             existing: { type: 'boolean', required: true },
             project: { type: 'uint' },
-            source: { type: 'string' },
+            source: { type: 'organization' },
+            sourceRaw: { type: 'string' },
+            author: { type: 'organization' },
+            authorRaw: { type: 'string' },
             title: { type: 'string' },
             url: { type: 'string' },
             website: { type: 'string' },
@@ -29,8 +103,12 @@ const leadAddSchema = [];
             description: 'Schema for lead options /lead-options/',
         },
         fields: {
-            assignee: { type: 'array.keyValuePair' },
-            confidentiality: { type: 'array.keyValuePairSS' },
+            projects: { type: 'array.unknown' },
+            status: { type: 'array.status' },
+            leadGroups: { type: 'array.unknown' },
+            members: { type: 'array.member' },
+            organizations: { type: 'array.organization' },
+            confidentiality: { type: 'array.confidentiality' },
         },
     };
     leadAddSchema.push({ name, schema });
@@ -69,23 +147,6 @@ const leadAddSchema = [];
 }
 
 {
-    const name = 'user-s';
-    const schema = {
-        doc: {
-            name: 'User Small',
-            description: 'Small Data for user',
-        },
-        fields: {
-            displayPicture: { type: 'uint' },
-            displayName: { type: 'string', required: true },
-            email: { type: 'string', required: true },
-            id: { type: 'uint', required: true },
-        },
-    };
-    leadAddSchema.push({ name, schema });
-}
-
-{
     const name = 'lead';
     const schema = {
         doc: {
@@ -97,13 +158,18 @@ const leadAddSchema = [];
             sourceType: { type: 'string' }, // set is required later
             assignee: { type: 'uint' },
             leadGroup: { type: 'uint' },
-            assigneeDetails: { type: 'user-s' },
+            assigneeDetails: { type: 'member' },
             attachment: { type: 'object' }, // file url
             confidentiality: { type: 'string', required: true },
             noOfEntries: { type: 'int' },
             project: { type: 'uint' },
             publishedOn: { type: 'string' },
-            source: { type: 'string' }, // url
+            source: { type: 'uint' }, // url
+            author: { type: 'uint' }, // url
+            sourceRaw: { type: 'string' }, // url
+            authorRaw: { type: 'string' }, // url
+            sourceDetail: { type: 'unknown' },
+            authorDetail: { type: 'unknown' },
             status: { type: 'string', required: true },
             text: { type: 'string' },
             title: { type: 'string', required: true },

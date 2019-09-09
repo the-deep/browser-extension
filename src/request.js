@@ -117,7 +117,9 @@ const CustomRequestCoordinator = createRequestCoordinator({
         const {
             url,
             method,
-            schemaName,
+            extras: {
+                schemaName,
+            } = {},
         } = request;
         if (schemaName === undefined) {
             // NOTE: usually there is no response body for DELETE

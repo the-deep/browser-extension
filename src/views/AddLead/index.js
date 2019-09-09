@@ -31,14 +31,9 @@ import {
 import {
     updateInputValuesAction,
     clearInputValueAction,
-    setProjectListAction,
     inputValuesForTabSelector,
-    uiStateForTabSelector,
     currentTabIdSelector,
     currentUserIdSelector,
-    projectListSelector,
-    setLeadOptionsAction,
-    leadOptionsSelector,
     webServerAddressSelector,
 } from '#redux';
 
@@ -48,8 +43,6 @@ import requests from './requests';
 import styles from './styles.scss';
 
 const FaramBasicSelectInput = FaramInputElement(BasicSelectInput);
-
-const renderEmpty = () => 'Select a project for available option(s)';
 
 const submitButtonTitle = 'submit';
 const websiteInputLabel = 'Website';
@@ -65,11 +58,8 @@ const sameAsPublisherButtonTitle = 'Same as publisher';
 
 const propTypes = {
     className: PropTypes.string,
-    uiState: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
     inputValues: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
     currentTabId: PropTypes.string.isRequired,
-    projects: PropTypes.arrayOf(PropTypes.object).isRequired,
-    leadOptions: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types,
     updateInputValues: PropTypes.func.isRequired,
     clearInputValue: PropTypes.func.isRequired,
     currentUserId: PropTypes.number,
@@ -82,10 +72,6 @@ const propTypes = {
     }).isRequired,
     // eslint-disable-next-line react/no-unused-prop-types
     webServerAddress: PropTypes.string.isRequired,
-    // eslint-disable-next-line react/no-unused-prop-types
-    setProjectList: PropTypes.func.isRequired,
-    // eslint-disable-next-line react/no-unused-prop-types
-    setLeadOptions: PropTypes.func.isRequired,
 
     goToAddOrganization: PropTypes.func.isRequired,
 };
@@ -96,11 +82,8 @@ const defaultProps = {
 };
 
 const mapStateToProps = state => ({
-    uiState: uiStateForTabSelector(state),
     inputValues: inputValuesForTabSelector(state),
     currentTabId: currentTabIdSelector(state),
-    projects: projectListSelector(state),
-    leadOptions: leadOptionsSelector(state),
     currentUserId: currentUserIdSelector(state),
     webServerAddress: webServerAddressSelector(state),
 });
@@ -108,8 +91,6 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
     updateInputValues: params => dispatch(updateInputValuesAction(params)),
     clearInputValue: params => dispatch(clearInputValueAction(params)),
-    setProjectList: params => dispatch(setProjectListAction(params)),
-    setLeadOptions: params => dispatch(setLeadOptionsAction(params)),
 });
 
 function mergeLists(foo, bar) {
@@ -127,9 +108,13 @@ class AddLead extends React.PureComponent {
 
     static defaultProps = defaultProps;
 
-    static keySelector = d => d.key;
+    static memberKeySelector = d => d.id;
 
-    static labelSelector = d => d.value;
+    static memberLabelSelector = d => d.displayName;
+
+    static confidentialityKeySelector = d => d.key;
+
+    static confidentialityLabelSelector = d => d.value;
 
     static projectKeySelector = d => d.id;
 
@@ -156,6 +141,8 @@ class AddLead extends React.PureComponent {
             searchedOrganizations: [],
             // Organizations filled by web-info-extract and lead-options
             organizations: [],
+
+            faramErrors: {},
         };
 
         this.schema = {
@@ -178,19 +165,6 @@ class AddLead extends React.PureComponent {
         leadOptionsRequest.setDefaultParams({
             handleExtraInfoFill: this.handleExtraInfoFill,
         });
-    }
-
-    componentDidMount() {
-        const {
-            inputValues: { project },
-            setLeadOptions,
-        } = this.props;
-
-        // FIXME: why is leadOptions cleared here
-        const moreThanOneProject = project && project.length > 0;
-        if (!moreThanOneProject) {
-            setLeadOptions({ leadOptions: {} });
-        }
     }
 
     setSearchedOrganizations = (searchedOrganizations) => {
@@ -219,23 +193,25 @@ class AddLead extends React.PureComponent {
         }
     }
 
-    handleExtraInfoFill = () => {
+    handleExtraInfoFill = (leadOptions) => {
         const {
             currentTabId,
             currentUserId,
             inputValues,
-            leadOptions,
-            uiState,
             updateInputValues,
         } = this.props;
+
+        const { organizations } = leadOptions;
+
+        if (organizations.length > 0) {
+            this.setState(state => ({
+                organizations: mergeLists(state.organizations, organizations),
+            }));
+        }
 
         updateInputValues({
             tabId: currentTabId,
             values: fillExtraInfo(inputValues, currentUserId, leadOptions),
-            uiState: {
-                ...uiState,
-                pristine: false,
-            },
         });
     }
 
@@ -243,7 +219,6 @@ class AddLead extends React.PureComponent {
         const {
             currentTabId,
             inputValues,
-            uiState,
             updateInputValues,
         } = this.props;
 
@@ -263,10 +238,6 @@ class AddLead extends React.PureComponent {
         updateInputValues({
             tabId: currentTabId,
             values: fillWebInfo(inputValues, webInfo),
-            uiState: {
-                ...uiState,
-                pristine: false,
-            },
         });
     }
 
@@ -275,7 +246,6 @@ class AddLead extends React.PureComponent {
             currentTabId,
             updateInputValues,
             inputValues,
-            uiState,
         } = this.props;
 
         updateInputValues({
@@ -283,10 +253,6 @@ class AddLead extends React.PureComponent {
             values: {
                 ...inputValues,
                 author: inputValues.source,
-            },
-            uiState: {
-                ...uiState,
-                pristine: false,
             },
         });
     }
@@ -299,28 +265,14 @@ class AddLead extends React.PureComponent {
 
         updateInputValues({
             tabId: currentTabId,
-            uiState: {
-                faramErrors,
-                pristine: true,
-            },
             values,
         });
+
+        this.setState({ faramErrors });
     }
 
     handleFaramValidationFailure = (faramErrors) => {
-        const {
-            currentTabId,
-            updateInputValues,
-        } = this.props;
-
-        updateInputValues({
-            tabId: currentTabId,
-            values: {},
-            uiState: {
-                faramErrors,
-                pristine: true,
-            },
-        });
+        this.setState({ faramErrors });
     }
 
     handleFaramValidationSuccess = (values) => {
@@ -329,6 +281,8 @@ class AddLead extends React.PureComponent {
                 leadCreateRequest,
             },
         } = this.props;
+
+        // TODO: create filter logic for assignee
 
         leadCreateRequest.do({
             values,
@@ -353,45 +307,19 @@ class AddLead extends React.PureComponent {
     }
 
     handleLeadCreationFailure = (faramErrors) => {
-        const {
-            currentTabId,
-            updateInputValues,
-        } = this.props;
-
         this.setState({
             leadSubmitted: false,
             targetUrl: undefined,
-        });
-
-        updateInputValues({
-            tabId: currentTabId,
-            values: {},
-            uiState: {
-                faramErrors,
-                pristine: true,
-            },
+            faramErrors,
         });
     }
 
     handleLeadCreationFatal = () => {
-        const {
-            currentTabId,
-            updateInputValues,
-        } = this.props;
-
         this.setState({
             leadSubmitted: false,
             targetUrl: undefined,
-        });
-
-        updateInputValues({
-            tabId: currentTabId,
-            values: {},
-            uiState: {
-                faramErrors: {
-                    $internal: ['Some error occurred! Please check your internet connectivity.'],
-                },
-                pristine: true,
+            faramErrors: {
+                $internal: ['Some error occurred! Please check your internet connectivity.'],
             },
         });
     }
@@ -403,23 +331,37 @@ class AddLead extends React.PureComponent {
 
             leadSubmitted,
             targetUrl,
+            faramErrors,
         } = this.state;
 
         const {
             inputValues,
-            uiState: { faramErrors },
-            projects,
             className,
-            leadOptions: {
-                assignee,
-                confidentiality,
-            },
             requests: {
-                webInfoRequest: { pending: pendingWebInfo },
-                leadOptionsRequest: { pending: pendingLeadOptions },
-                projectsListRequest: { pending: pendingProjectList },
-                organizationsRequest: { pending: pendingSearchedOrganizations },
-                leadCreateRequest: { pending: pendingLeadCreate },
+                webInfoRequest: {
+                    pending: pendingWebInfo,
+                },
+                projectsListRequest: {
+                    pending: pendingProjectList,
+                    response: {
+                        results: projects,
+                    } = {},
+                },
+                leadOptionsRequest: {
+                    pending: pendingLeadOptions,
+                    response: {
+                        members,
+                        confidentiality,
+                    } = {},
+                },
+
+                organizationsRequest: {
+                    pending: pendingSearchedOrganizations,
+                },
+
+                leadCreateRequest: {
+                    pending: pendingLeadCreate,
+                },
             },
             goToAddOrganization,
         } = this.props;
@@ -432,13 +374,17 @@ class AddLead extends React.PureComponent {
             );
         }
 
-        const disabled = pendingProjectList
+        // TODO: show authorRaw and publisherRaw
+
+        const isProjectSelected = inputValues.project && inputValues.project.length > 0;
+
+        const pending = pendingProjectList
             || pendingWebInfo
             || pendingLeadCreate;
 
         return (
             <div className={_cs(styles.addLead, className)}>
-                { disabled && (
+                { pending && (
                     <LoadingAnimation />
                 )}
                 <Faram
@@ -449,7 +395,7 @@ class AddLead extends React.PureComponent {
                     schema={this.schema}
                     error={faramErrors}
                     value={inputValues}
-                    disabled={disabled}
+                    disabled={pending}
                 >
                     <NonFieldErrors faramElement />
                     <MultiSelectInput
@@ -471,7 +417,7 @@ class AddLead extends React.PureComponent {
                             options={organizations}
                             keySelector={AddLead.organizationKeySelector}
                             labelSelector={AddLead.organizationLabelSelector}
-                            disabled={pendingLeadOptions || disabled}
+                            disabled={pendingLeadOptions || pending || !isProjectSelected}
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
@@ -495,7 +441,7 @@ class AddLead extends React.PureComponent {
                             options={organizations}
                             keySelector={AddLead.organizationKeySelector}
                             labelSelector={AddLead.organizationLabelSelector}
-                            disabled={pendingLeadOptions || disabled}
+                            disabled={pendingLeadOptions || pending || !isProjectSelected}
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
@@ -520,20 +466,18 @@ class AddLead extends React.PureComponent {
                     <SelectInput
                         faramElementName="confidentiality"
                         label={confidentialityInputLabel}
-                        options={confidentiality}
-                        keySelector={AddLead.keySelector}
-                        labelSelector={AddLead.labelSelector}
-                        renderEmpty={renderEmpty}
-                        disabled={pendingLeadOptions || disabled}
+                        options={isProjectSelected ? confidentiality : undefined}
+                        keySelector={AddLead.confidentialityKeySelector}
+                        labelSelector={AddLead.confidentialityLabelSelector}
+                        disabled={pendingLeadOptions || pending || !isProjectSelected}
                     />
                     <SelectInput
                         faramElementName="assignee"
                         label={assigneeInputLabel}
-                        options={assignee}
-                        keySelector={AddLead.keySelector}
-                        labelSelector={AddLead.labelSelector}
-                        renderEmpty={renderEmpty}
-                        disabled={pendingLeadOptions || disabled}
+                        options={isProjectSelected ? members : undefined}
+                        keySelector={AddLead.memberKeySelector}
+                        labelSelector={AddLead.memberLabelSelector}
+                        disabled={pendingLeadOptions || pending || !isProjectSelected}
                     />
                     <DateInput
                         faramElementName="publishedOn"
@@ -551,7 +495,7 @@ class AddLead extends React.PureComponent {
                         <PrimaryButton
                             type="submit"
                             pending={pendingLeadCreate}
-                            disabled={disabled}
+                            disabled={pending || pendingLeadOptions}
                         >
                             { submitButtonTitle }
                         </PrimaryButton>

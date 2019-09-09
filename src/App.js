@@ -14,8 +14,8 @@ import {
     tokenSelector,
     webServerAddressSelector,
     clearDomainDataAction,
-    clearProjectListAction,
-    clearLeadOptionsAction,
+    // clearProjectListAction,
+    // clearLeadOptionsAction,
 } from '#redux';
 
 import {
@@ -45,8 +45,8 @@ const mapDispatchToProps = dispatch => ({
     setCurrentTabInfo: params => dispatch(setCurrentTabInfoAction(params)),
     setToken: params => dispatch(setTokenAction(params)),
     clearDomainData: () => dispatch(clearDomainDataAction()),
-    clearLeadOptions: () => dispatch(clearLeadOptionsAction()),
-    clearProjectList: () => dispatch(clearProjectListAction()),
+    // clearLeadOptions: () => dispatch(clearLeadOptionsAction()),
+    // clearProjectList: () => dispatch(clearProjectListAction()),
 });
 
 const propTypes = {
@@ -58,8 +58,8 @@ const propTypes = {
     setToken: PropTypes.func.isRequired,
     webServerAddress: PropTypes.string.isRequired,
     clearDomainData: PropTypes.func.isRequired,
-    clearLeadOptions: PropTypes.func.isRequired,
-    clearProjectList: PropTypes.func.isRequired,
+    // clearLeadOptions: PropTypes.func.isRequired,
+    // clearProjectList: PropTypes.func.isRequired,
     requests: PropTypes.shape({
         tokenRefreshRequest: PropTypes.object.isRequired,
     }).isRequired,
@@ -98,7 +98,6 @@ const requests = {
         url: '/token/refresh/',
         method: methods.POST,
         body: ({ params }) => ({ refresh: (params.token || {}).refresh }),
-        schemaName: 'token',
         onSuccess: ({
             props: { setToken, token },
             response,
@@ -110,7 +109,7 @@ const requests = {
                 ...token,
                 access: response.access,
             };
-            setToken({ token: tokenObject });
+            setToken(tokenObject);
             setAuthAndError(true);
         },
         onFailure: ({ params: { setAuthAndError } }) => {
@@ -118,6 +117,9 @@ const requests = {
         },
         onFatal: ({ params: { setAuthAndError } }) => {
             setAuthAndError(false, tokenRefreshFatalErrorMessage);
+        },
+        extras: {
+            schemaName: 'token',
         },
     },
 };
@@ -244,8 +246,8 @@ class App extends React.PureComponent {
     componentWillReceiveProps(nextProps) {
         const {
             clearDomainData,
-            clearProjectList,
-            clearLeadOptions,
+            // clearProjectList,
+            // clearLeadOptions,
             requests: {
                 tokenRefreshRequest,
             },
@@ -260,8 +262,8 @@ class App extends React.PureComponent {
 
         if (oldWebServerAddress !== newWebServerAddress) {
             clearDomainData();
-            clearProjectList();
-            clearLeadOptions();
+            // clearProjectList();
+            // clearLeadOptions();
             this.requestTokenFromBackground(newWebServerAddress);
         } else if (newToken.refresh !== oldToken.refresh) {
             if (newToken.refresh) {
@@ -315,7 +317,7 @@ class App extends React.PureComponent {
             },
         } = this.props;
 
-        setToken({ token });
+        setToken(token);
 
         if (token && token.refresh) {
             tokenRefreshRequest.do({
@@ -354,7 +356,7 @@ class App extends React.PureComponent {
 
                 if (sender === webServerAddress) {
                     console.info('Received token through background', token);
-                    setToken({ token });
+                    setToken(token);
                 }
                 break;
             }

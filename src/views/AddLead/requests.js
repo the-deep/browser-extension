@@ -1,9 +1,12 @@
+import { unique, isDefined } from '@togglecorp/fujs';
+
 import { methods } from '#request';
+
+// TODO: block if failure for projectsListRequest and leadOptionsRequest
 
 const requests = {
     projectsListRequest: {
         url: '/projects/member-of/',
-        schemaName: 'projectsList',
         query: {
             fields: [
                 'id',
@@ -12,64 +15,72 @@ const requests = {
         },
         method: methods.GET,
         onMount: true,
-        onSuccess: ({ props, response }) => {
-            props.setProjectList({ projects: response.results });
+        extras: {
+            schemaName: 'projectsList',
+        },
+        options: {
+            delay: 300,
         },
     },
     webInfoRequest: {
         url: '/web-info-extract/',
         body: ({ props: { currentTabId } }) => ({ url: currentTabId }),
         method: methods.POST,
-        onPropsChanged: ['currentTabId'],
-        onMount: ({ props: { currentTabId } }) => currentTabId && currentTabId.length > 0,
-        schemaName: 'webInfo',
         onSuccess: ({ params, response }) => {
             params.handleWebInfoFill(response);
         },
+        extras: {
+            schemaName: 'webInfo',
+        },
+
+        onMount: ({ props: { currentTabId } }) => currentTabId && currentTabId.length > 0,
+        onPropsChanged: ['currentTabId'],
     },
+
+    leadOptionsRequest: {
+        url: '/lead-options/',
+        method: methods.POST,
+        body: ({ props: { inputValues } }) => ({
+            projects: inputValues.project,
+            leadGroups: [], // this will not fetch any leadGroups
+            organizations: unique(
+                [
+                    inputValues.publisher,
+                    inputValues.author,
+                ].filter(isDefined),
+                org => org.id,
+            ),
+        }),
+        onSuccess: ({ params, response }) => {
+            params.handleExtraInfoFill(response);
+        },
+        extras: {
+            schemaName: 'leadOptions',
+        },
+
+        onMount: ({ props: { inputValues: { project } } }) => project && project.length > 0,
+        onPropsChanged: {
+            inputValues: ({
+                prevProps: { inputValues: { project: oldProject } },
+                props: { inputValues: { project: newProject } },
+            }) => (
+                newProject !== oldProject && newProject && newProject.length > 0
+            ),
+        },
+    },
+
     organizationsRequest: {
         url: '/organizations/',
         query: ({ params }) => ({
             search: params.searchText,
-            limit: 30,
+            // limit: 30,
         }),
         method: methods.GET,
         onSuccess: ({ params, response }) => {
             params.setSearchedOrganizations(response.results);
         },
         options: {
-            delay: 1000,
-        },
-    },
-    leadOptionsRequest: {
-        url: '/lead-options/',
-        method: methods.GET,
-        schemaName: 'leadOptions',
-        query: ({ props: { inputValues } }) => ({
-            project: inputValues.project,
-            fields: [
-                'assignee',
-                'confidentiality',
-            ],
-        }),
-        onPropsChanged: {
-            inputValues: ({
-                props: { inputValues = {} },
-                prevProps: { inputValues: prevInputValues = {} },
-            }) => (
-                inputValues.project !== prevInputValues.project
-                && inputValues.project
-                && inputValues.project.length > 0
-            ),
-        },
-        onMount: ({
-            props: {
-                inputValues: { project } = {},
-            },
-        }) => project && project.length > 0,
-        onSuccess: ({ props, params, response }) => {
-            props.setLeadOptions({ leadOptions: response });
-            params.handleExtraInfoFill();
+            delay: 300,
         },
     },
     leadCreateRequest: {
@@ -79,7 +90,9 @@ const requests = {
             ...params.values,
             sourceType: 'website',
         }),
-        schemaName: 'array.lead',
+        extras: {
+            schemaName: 'array.lead',
+        },
         onSuccess: ({
             props: { currentTabId, webServerAddress },
             params,
