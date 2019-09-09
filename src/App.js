@@ -14,8 +14,6 @@ import {
     tokenSelector,
     webServerAddressSelector,
     clearDomainDataAction,
-    // clearProjectListAction,
-    // clearLeadOptionsAction,
 } from '#redux';
 
 import {
@@ -45,8 +43,6 @@ const mapDispatchToProps = dispatch => ({
     setCurrentTabInfo: params => dispatch(setCurrentTabInfoAction(params)),
     setToken: params => dispatch(setTokenAction(params)),
     clearDomainData: () => dispatch(clearDomainDataAction()),
-    // clearLeadOptions: () => dispatch(clearLeadOptionsAction()),
-    // clearProjectList: () => dispatch(clearProjectListAction()),
 });
 
 const propTypes = {
@@ -58,8 +54,6 @@ const propTypes = {
     setToken: PropTypes.func.isRequired,
     webServerAddress: PropTypes.string.isRequired,
     clearDomainData: PropTypes.func.isRequired,
-    // clearLeadOptions: PropTypes.func.isRequired,
-    // clearProjectList: PropTypes.func.isRequired,
     requests: PropTypes.shape({
         tokenRefreshRequest: PropTypes.object.isRequired,
     }).isRequired,
@@ -246,8 +240,6 @@ class App extends React.PureComponent {
     componentWillReceiveProps(nextProps) {
         const {
             clearDomainData,
-            // clearProjectList,
-            // clearLeadOptions,
             requests: {
                 tokenRefreshRequest,
             },
@@ -262,8 +254,6 @@ class App extends React.PureComponent {
 
         if (oldWebServerAddress !== newWebServerAddress) {
             clearDomainData();
-            // clearProjectList();
-            // clearLeadOptions();
             this.requestTokenFromBackground(newWebServerAddress);
         } else if (newToken.refresh !== oldToken.refresh) {
             if (newToken.refresh) {

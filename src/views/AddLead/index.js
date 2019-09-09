@@ -18,10 +18,10 @@ import PrimaryButton from '#rsca/Button/PrimaryButton';
 import DateInput from '#rsci/DateInput';
 import MultiSelectInput from '#rsci/MultiSelectInput';
 import NonFieldErrors from '#rsci/NonFieldErrors';
-import BasicSelectInput from '../../vendor/react-store/v2/Input/BasicSelectInput';
 import SelectInput from '#rsci/SelectInput';
 import TextInput from '#rsci/TextInput';
 import LoadingAnimation from '#rscv/LoadingAnimation';
+import BasicSelectInput from '#rsu/../v2/Input/BasicSelectInput';
 
 import {
     RequestCoordinator,

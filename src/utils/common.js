@@ -5,18 +5,16 @@ import {
     isList,
 } from '@togglecorp/fujs';
 
-
-// FIXME: this is not used
-export const forEach = (obj, func) => {
+const forEach = (obj, func) => {
     Object.keys(obj).forEach((key) => {
         const val = obj[key];
         func(key, val);
     });
 };
 
-// FIXME: this is not here
+// eslint-disable-next-line import/prefer-default-export
 export const sanitizeResponse = (data) => {
-    if (data === null || data === undefined) {
+    if (isNotDefined(data)) {
         return undefined;
     }
     if (isList(data)) {
@@ -26,11 +24,7 @@ export const sanitizeResponse = (data) => {
         let newData = {};
         forEach(data, (k, val) => {
             const newEntry = sanitizeResponse(val);
-            // Comment from Bibek:
-            // This was:
-            // if (newEntry) {
-            // But it failed when an empty string or 0 was returned.
-            if (isNotDefined(newEntry)) {
+            if (isDefined(newEntry)) {
                 newData = {
                     ...newData,
                     [k]: newEntry,

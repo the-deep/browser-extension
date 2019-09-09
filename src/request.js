@@ -13,6 +13,8 @@ import {
     tokenSelector,
 } from '#redux';
 
+import { sanitizeResponse } from '#utils/common';
+
 import store from '#store';
 
 import schema from '#schema';
@@ -121,6 +123,9 @@ const CustomRequestCoordinator = createRequestCoordinator({
                 schemaName,
             } = {},
         } = request;
+
+        const sanitizedBody = sanitizeResponse(body);
+
         if (schemaName === undefined) {
             // NOTE: usually there is no response body for DELETE
             if (method !== 'DELETE') {
@@ -128,13 +133,13 @@ const CustomRequestCoordinator = createRequestCoordinator({
             }
         } else {
             try {
-                schema.validate(body, schemaName);
+                schema.validate(sanitizedBody, schemaName);
             } catch (e) {
-                console.error(url, method, body, e.message);
+                console.error(url, method, sanitizedBody, e.message);
                 throw (e);
             }
         }
-        return body;
+        return sanitizedBody;
     },
     transformErrors: (response) => {
         const faramErrors = alterResponseErrorToFaramError(response.errors);
