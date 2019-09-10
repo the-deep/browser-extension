@@ -30,6 +30,8 @@ const propTypes = {
         organizationTypesRequest: PropTypes.object.isRequired,
     }).isRequired,
     className: PropTypes.string,
+    setNavState: PropTypes.func.isRequired,
+    getNavState: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
@@ -101,9 +103,6 @@ class AddOrganization extends React.PureComponent {
     }
 
     handleOrganizationCreateSuccess = (organization) => {
-        // TODO:
-        // 1. set this to either publisher or author later
-        // 2. add this organization to organization list
         this.setState({
             organizationSubmitted: true,
         });

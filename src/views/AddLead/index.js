@@ -74,6 +74,8 @@ const propTypes = {
     webServerAddress: PropTypes.string.isRequired,
 
     goToAddOrganization: PropTypes.func.isRequired,
+    setNavState: PropTypes.func.isRequired,
+    getNavState: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
@@ -399,6 +401,12 @@ class AddLead extends React.PureComponent {
             requests: {
                 webInfoRequest: {
                     pending: pendingWebInfo,
+                    response: {
+                        sourceRaw,
+                        source,
+                        authorRaw,
+                        author,
+                    } = {},
                 },
                 projectsListRequest: {
                     pending: pendingProjectList,
@@ -422,7 +430,6 @@ class AddLead extends React.PureComponent {
                     pending: pendingLeadCreate,
                 },
             },
-            goToAddOrganization,
         } = this.props;
 
         if (leadSubmitted) {
@@ -432,8 +439,6 @@ class AddLead extends React.PureComponent {
                 />
             );
         }
-
-        // TODO: show authorRaw and publisherRaw
 
         const isProjectSelected = inputValues.project && inputValues.project.length > 0;
 
@@ -477,6 +482,7 @@ class AddLead extends React.PureComponent {
                             keySelector={AddLead.organizationKeySelector}
                             labelSelector={AddLead.organizationLabelSelector}
                             disabled={pendingLeadOptions || pending || !isProjectSelected}
+                            hint={!source && sourceRaw ? `Suggestion: ${sourceRaw}` : undefined}
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
@@ -501,6 +507,7 @@ class AddLead extends React.PureComponent {
                             keySelector={AddLead.organizationKeySelector}
                             labelSelector={AddLead.organizationLabelSelector}
                             disabled={pendingLeadOptions || pending || !isProjectSelected}
+                            hint={!author && authorRaw ? `Suggestion: ${authorRaw}` : undefined}
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
