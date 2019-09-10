@@ -311,8 +311,6 @@ class AddLead extends React.PureComponent {
             },
         } = this.props;
 
-        // TODO: create filter logic for assignee
-
         leadCreateRequest.do({
             values,
             handleLeadCreationFailure: this.handleLeadCreationFailure,
