@@ -7,20 +7,20 @@ import styles from './styles.scss';
 const Navbar = ({
     title,
     className,
-    rightComponent: RightComponent,
+    rightComponent,
 }) => (
     <div className={_cs(className, styles.navbar)}>
         <h2 className={styles.title}>
             { title }
         </h2>
-        <RightComponent />
+        {rightComponent}
     </div>
 );
 
 Navbar.propTypes = {
     title: PropTypes.string.isRequired,
     className: PropTypes.string,
-    rightComponent: PropTypes.func,
+    rightComponent: PropTypes.node,
 };
 
 Navbar.defaultProps = {

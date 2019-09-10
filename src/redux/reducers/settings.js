@@ -41,4 +41,3 @@ export const settingsReducers = {
 
 const settingsReducer = createReducerWithMap(settingsReducers, initialSettingsState);
 export default settingsReducer;
-

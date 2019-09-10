@@ -4,6 +4,7 @@ const iconNames = {
     back: 'ion-android-arrow-back',
     checkmarkCircle: 'ion-ios-checkmark-outline',
     closeCircle: 'ion-ios-close-outline',
+    addPerson: 'ion-person-add',
 };
 
 export default iconNames;

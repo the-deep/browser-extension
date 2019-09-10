@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 
 import {
     createRequestCoordinator,
-    methods,
+    createRequestClient as createRequestClientFromLib,
+    methods as methodsFromLib,
 } from '@togglecorp/react-rest-request';
 
 import {
@@ -11,6 +12,8 @@ import {
     apiServerAddressSelector,
     tokenSelector,
 } from '#redux';
+
+import { sanitizeResponse } from '#utils/common';
 
 import store from '#store';
 
@@ -89,7 +92,7 @@ const CustomRequestCoordinator = createRequestCoordinator({
         } = data;
 
         return {
-            method: method || methods.GET,
+            method: method || methodsFromLib.GET,
             body: JSON.stringify(body),
             headers: {
                 Accept: 'application/json',
@@ -116,8 +119,13 @@ const CustomRequestCoordinator = createRequestCoordinator({
         const {
             url,
             method,
-            schemaName,
+            extras: {
+                schemaName,
+            } = {},
         } = request;
+
+        const sanitizedBody = sanitizeResponse(body);
+
         if (schemaName === undefined) {
             // NOTE: usually there is no response body for DELETE
             if (method !== 'DELETE') {
@@ -125,13 +133,13 @@ const CustomRequestCoordinator = createRequestCoordinator({
             }
         } else {
             try {
-                schema.validate(body, schemaName);
+                schema.validate(sanitizedBody, schemaName);
             } catch (e) {
-                console.error(url, method, body, e.message);
+                console.error(url, method, sanitizedBody, e.message);
                 throw (e);
             }
         }
-        return body;
+        return sanitizedBody;
     },
     transformErrors: (response) => {
         const faramErrors = alterResponseErrorToFaramError(response.errors);
@@ -152,4 +160,5 @@ export const createUrlForBrowserExtensionPage = () => (`
     ${getWebEndpoint()}/browser-extension/
 `);
 
-export * from '@togglecorp/react-rest-request';
+export const methods = methodsFromLib;
+export const createRequestClient = createRequestClientFromLib;

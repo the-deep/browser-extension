@@ -4,14 +4,15 @@ import { compose } from 'redux';
 import { connect } from 'react-redux';
 import {
     _cs,
-    isDefined,
+    isFalsyString,
+    unique,
 } from '@togglecorp/fujs';
 import Faram, {
     requiredCondition,
     urlCondition,
+    FaramInputElement,
 } from '@togglecorp/faram';
 
-import Icon from '#rscg/Icon';
 import Button from '#rsca/Button';
 import PrimaryButton from '#rsca/Button/PrimaryButton';
 import DateInput from '#rsci/DateInput';
@@ -20,85 +21,29 @@ import NonFieldErrors from '#rsci/NonFieldErrors';
 import SelectInput from '#rsci/SelectInput';
 import TextInput from '#rsci/TextInput';
 import LoadingAnimation from '#rscv/LoadingAnimation';
+import BasicSelectInput from '#rsu/../v2/Input/BasicSelectInput';
 
 import {
     RequestCoordinator,
     createRequestClient,
-    methods,
 } from '#request';
 
 import {
     updateInputValuesAction,
     clearInputValueAction,
-    setProjectListAction,
     inputValuesForTabSelector,
-    uiStateForTabSelector,
     currentTabIdSelector,
     currentUserIdSelector,
-    projectListSelector,
-    setLeadOptionsAction,
-    leadOptionsSelector,
     webServerAddressSelector,
 } from '#redux';
 
+import SuccessMessage from './SuccessMessage';
+import { fillExtraInfo, fillWebInfo } from './utils';
+import requests from './requests';
 import styles from './styles.scss';
 
-const emptyObject = {};
+const FaramBasicSelectInput = FaramInputElement(BasicSelectInput);
 
-const keySelector = d => (d || {}).key;
-const labelSelector = d => (d || {}).value;
-const projectKeySelector = d => (d || {}).id;
-const projectLabelSelector = d => (d || {}).title;
-
-const mapStateToProps = state => ({
-    uiState: uiStateForTabSelector(state),
-    inputValues: inputValuesForTabSelector(state),
-    currentTabId: currentTabIdSelector(state),
-    projects: projectListSelector(state),
-    leadOptions: leadOptionsSelector(state),
-    currentUserId: currentUserIdSelector(state),
-    webServerAddress: webServerAddressSelector(state),
-});
-
-const mapDispatchToProps = dispatch => ({
-    updateInputValues: params => dispatch(updateInputValuesAction(params)),
-    clearInputValue: params => dispatch(clearInputValueAction(params)),
-    setProjectList: params => dispatch(setProjectListAction(params)),
-    setLeadOptions: params => dispatch(setLeadOptionsAction(params)),
-});
-
-const propTypes = {
-    className: PropTypes.string,
-    uiState: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
-    inputValues: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
-    currentTabId: PropTypes.string.isRequired,
-    projects: PropTypes.arrayOf(PropTypes.object).isRequired,
-    leadOptions: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types,
-    updateInputValues: PropTypes.func.isRequired,
-    clearInputValue: PropTypes.func.isRequired,
-    currentUserId: PropTypes.number,
-    webServerAddress: PropTypes.string.isRequired,
-    requests: PropTypes.shape({
-        webInfoRequest: PropTypes.object.isRequired,
-        leadOptionsRequest: PropTypes.object.isRequired,
-        projectsListRequest: PropTypes.object.isRequired,
-        leadCreateRequest: PropTypes.object.isRequired,
-    }).isRequired,
-    // eslint-disable-next-line react/no-unused-prop-types
-    setProjectList: PropTypes.func.isRequired,
-    // eslint-disable-next-line react/no-unused-prop-types
-    setLeadOptions: PropTypes.func.isRequired,
-};
-
-const defaultProps = {
-    className: undefined,
-    currentUserId: undefined,
-};
-
-const renderEmpty = () => 'Select a project for available option(s)';
-const leadSubmitFailureMessage = 'Failed to save the lead';
-const leadSubmitSuccessMessage = 'Lead submitted successfully';
-const addEntryButtonTitle = 'Add entry';
 const submitButtonTitle = 'submit';
 const websiteInputLabel = 'Website';
 const urlInputLabel = 'Url';
@@ -111,114 +56,73 @@ const titleInputLabel = 'Title';
 const projectInputLabel = 'Project';
 const sameAsPublisherButtonTitle = 'Same as publisher';
 
-const requests = {
-    webInfoRequest: {
-        url: '/web-info-extract/',
-        body: ({ props: { currentTabId } }) => ({ url: currentTabId }),
-        method: methods.POST,
-        onPropsChanged: ['currentTabId'],
-        onMount: ({ props: { currentTabId } }) => currentTabId && currentTabId.length > 0,
-        schemaName: 'webInfo',
-        onSuccess: ({ params, response }) => {
-            params.fillWebInfo(response);
-        },
-    },
-    leadOptionsRequest: {
-        url: '/lead-options/',
-        method: methods.GET,
-        schemaName: 'leadOptions',
-        query: ({ props: { inputValues } }) => ({
-            project: inputValues.project,
-            fields: [
-                'assignee',
-                'confidentiality',
-            ],
-        }),
-        onPropsChanged: {
-            inputValues: ({
-                props: { inputValues = {} },
-                prevProps: { inputValues: prevInputValues = {} },
-            }) => (
-                inputValues.project !== prevInputValues.project
-                && inputValues.project
-                && inputValues.project.length > 0
-            ),
-        },
-        onMount: ({
-            props: {
-                inputValues: { project } = {},
-            },
-        }) => project && project.length > 0,
-        onSuccess: ({ props, params, response }) => {
-            props.setLeadOptions({ leadOptions: response });
-            params.fillExtraInfo();
-        },
-    },
-    projectsListRequest: {
-        url: '/projects/member-of/',
-        schemaName: 'projectsList',
-        query: {
-            fields: [
-                'id',
-                'title',
-            ],
-        },
-        method: methods.GET,
-        onMount: true,
-        onSuccess: ({ props, response }) => {
-            props.setProjectList({ projects: response.results });
-        },
-    },
-    leadCreateRequest: {
-        url: '/leads/',
-        method: methods.POST,
-        body: ({ params }) => ({
-            ...params.values,
-            sourceType: 'website',
-        }),
-        schemaName: 'array.lead',
-        /*
-         * Commented out because this would save only id and project
-        query: {
-            fields: [
-                'id',
-                'project',
-            ],
-        },
-        */
-        onSuccess: ({
-            props: { currentTabId },
-            params,
-            response,
-        }) => {
-            let submittedLeadId;
-            let submittedProjectId;
+const propTypes = {
+    className: PropTypes.string,
+    inputValues: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
+    currentTabId: PropTypes.string.isRequired,
+    updateInputValues: PropTypes.func.isRequired,
+    clearInputValue: PropTypes.func.isRequired,
+    currentUserId: PropTypes.number,
+    requests: PropTypes.shape({
+        webInfoRequest: PropTypes.object.isRequired,
+        leadOptionsRequest: PropTypes.object.isRequired,
+        projectsListRequest: PropTypes.object.isRequired,
+        leadCreateRequest: PropTypes.object.isRequired,
+        organizationsRequest: PropTypes.object.isRequired,
+    }).isRequired,
+    // eslint-disable-next-line react/no-unused-prop-types
+    webServerAddress: PropTypes.string.isRequired,
 
-            if (response.length === 1) {
-                submittedLeadId = response[0].id;
-                submittedProjectId = response[0].project;
-            }
-
-            params.handleLeadCreationSuccess({
-                submittedLeadId,
-                submittedProjectId,
-                leadSubmittedSuccessfully: true,
-                errorDescription: undefined,
-                tabId: currentTabId,
-            });
-        },
-        onFailure: ({ params, error }) => {
-            params.handleLeadCreationFailure(error.faramErrors);
-        },
-        onFatal: ({ params }) => {
-            params.handleLeadCreationFatal();
-        },
-    },
+    goToAddOrganization: PropTypes.func.isRequired,
 };
+
+const defaultProps = {
+    className: undefined,
+    currentUserId: undefined,
+};
+
+const mapStateToProps = state => ({
+    inputValues: inputValuesForTabSelector(state),
+    currentTabId: currentTabIdSelector(state),
+    currentUserId: currentUserIdSelector(state),
+    webServerAddress: webServerAddressSelector(state),
+});
+
+const mapDispatchToProps = dispatch => ({
+    updateInputValues: params => dispatch(updateInputValuesAction(params)),
+    clearInputValue: params => dispatch(clearInputValueAction(params)),
+});
+
+function mergeLists(foo, bar) {
+    return unique(
+        [
+            ...foo,
+            ...bar,
+        ],
+        item => item.id,
+    );
+}
 
 class AddLead extends React.PureComponent {
     static propTypes = propTypes;
+
     static defaultProps = defaultProps;
+
+    static memberKeySelector = d => d.id;
+
+    static memberLabelSelector = d => d.displayName;
+
+    static confidentialityKeySelector = d => d.key;
+
+    static confidentialityLabelSelector = d => d.value;
+
+    static projectKeySelector = d => d.id;
+
+    static projectLabelSelector = d => d.title;
+
+    static organizationKeySelector = d => d.id;
+
+    static organizationLabelSelector = d => d.title;
 
     constructor(props) {
         super(props);
@@ -230,14 +134,15 @@ class AddLead extends React.PureComponent {
             },
         } = this.props;
 
-        webInfoRequest.setDefaultParams({ fillWebInfo: this.fillWebInfo });
-        leadOptionsRequest.setDefaultParams({ fillExtraInfo: this.fillExtraInfo });
-
         this.state = {
-            leadSubmittedSuccessfully: undefined,
-            submittedLeadId: undefined,
-            submittedProjectId: undefined,
-            errorDescription: undefined,
+            leadSubmitted: false,
+            targetUrl: undefined,
+
+            searchedOrganizations: [],
+            // Organizations filled by web-info-extract and lead-options
+            organizations: [],
+
+            faramErrors: {},
         };
 
         this.schema = {
@@ -249,110 +154,90 @@ class AddLead extends React.PureComponent {
                 confidentiality: [requiredCondition],
                 assignee: [requiredCondition],
                 publishedOn: [requiredCondition],
-                url: [
-                    requiredCondition,
-                    urlCondition,
-                ],
+                url: [requiredCondition, urlCondition],
                 website: [requiredCondition],
             },
         };
-    }
 
-    componentWillMount() {
-        const {
-            inputValues: { project },
-            setLeadOptions,
-        } = this.props;
-
-        const moreThanOneProject = project && project.length > 0;
-        if (!moreThanOneProject) {
-            setLeadOptions({ leadOptions: emptyObject });
-        }
-    }
-
-    fillExtraInfo = () => {
-        const {
-            currentTabId,
-            inputValues,
-            updateInputValues,
-            currentUserId,
-            leadOptions = emptyObject,
-            uiState,
-        } = this.props;
-
-        const values = {};
-        if (!inputValues.assignee) {
-            values.assignee = currentUserId;
-        }
-        if (!inputValues.confidentiality) {
-            values.confidentiality = ((leadOptions.confidentiality || [])[0] || {}).key;
-        }
-
-        const newValues = {
-            ...inputValues,
-            ...values,
-        };
-
-        const newUiState = {
-            ...uiState,
-            pristine: false,
-        };
-
-        updateInputValues({
-            tabId: currentTabId,
-            values: newValues,
-            uiState: newUiState,
+        webInfoRequest.setDefaultParams({
+            handleWebInfoFill: this.handleWebInfoFill,
+        });
+        leadOptionsRequest.setDefaultParams({
+            handleExtraInfoFill: this.handleExtraInfoFill,
         });
     }
 
-    fillWebInfo = (webInfo) => {
+    setSearchedOrganizations = (searchedOrganizations) => {
+        this.setState({ searchedOrganizations });
+    }
+
+    setOrganizations = (organizations) => {
+        this.setState({ organizations });
+    }
+
+    handleOrganizationSearchValueChange = (searchText) => {
+        const {
+            requests: {
+                organizationsRequest,
+            },
+        } = this.props;
+
+        if (isFalsyString(searchText)) {
+            organizationsRequest.abort();
+            this.setSearchedOrganizations([]);
+        } else {
+            organizationsRequest.do({
+                searchText,
+                setSearchedOrganizations: this.setSearchedOrganizations,
+            });
+        }
+    }
+
+    handleExtraInfoFill = (leadOptions) => {
+        const {
+            currentTabId,
+            currentUserId,
+            inputValues,
+            updateInputValues,
+        } = this.props;
+
+        const { organizations } = leadOptions;
+
+        if (organizations.length > 0) {
+            this.setState(state => ({
+                organizations: mergeLists(state.organizations, organizations),
+            }));
+        }
+
+        updateInputValues({
+            tabId: currentTabId,
+            values: fillExtraInfo(inputValues, currentUserId, leadOptions),
+        });
+    }
+
+    handleWebInfoFill = (webInfo) => {
         const {
             currentTabId,
             inputValues,
             updateInputValues,
-            uiState,
         } = this.props;
 
-        // FIXME: use isDefined and isNotDefined
-        const values = {};
-
-        if (webInfo.project && (!inputValues.project || inputValues.project.length === 0)) {
-            values.project = [webInfo.project];
+        const newOrgs = [];
+        if (webInfo.source) {
+            newOrgs.push(webInfo.source);
         }
-
-        if (webInfo.date && !inputValues.date) {
-            values.publishedOn = webInfo.date;
+        if (webInfo.author) {
+            newOrgs.push(webInfo.author);
         }
-        if (webInfo.source && !inputValues.source) {
-            values.source = webInfo.source;
+        if (newOrgs.length > 0) {
+            this.setState(state => ({
+                organizations: mergeLists(state.organizations, newOrgs),
+            }));
         }
-        if (webInfo.author && !inputValues.author) {
-            values.author = webInfo.author;
-        }
-        if (webInfo.website && !inputValues.website) {
-            values.website = webInfo.website;
-        }
-        if (webInfo.title && !inputValues.title) {
-            values.title = webInfo.title;
-        }
-        if (webInfo.url && !inputValues.url) {
-            values.url = webInfo.url;
-        }
-
-        const newValues = {
-            ...inputValues,
-            ...values,
-        };
-
-        const newUiState = {
-            ...uiState,
-            pristine: false,
-        };
 
         updateInputValues({
             tabId: currentTabId,
-            values: newValues,
-            newUiState,
+            values: fillWebInfo(inputValues, webInfo),
         });
     }
 
@@ -361,53 +246,33 @@ class AddLead extends React.PureComponent {
             currentTabId,
             updateInputValues,
             inputValues,
-            uiState,
         } = this.props;
-
-        const newValues = {
-            ...inputValues,
-            author: inputValues.source,
-        };
-
-        const newUiState = {
-            ...uiState,
-            pristine: false,
-        };
 
         updateInputValues({
             tabId: currentTabId,
-            values: newValues,
-            newUiState,
+            values: {
+                ...inputValues,
+                author: inputValues.source,
+            },
         });
     }
 
-    updateUiState = (uiState) => {
+    handleFaramChange = (values, faramErrors) => {
         const {
-            currentTabId,
             updateInputValues,
+            currentTabId,
         } = this.props;
 
         updateInputValues({
             tabId: currentTabId,
-            values: {},
-            uiState,
+            values,
         });
+
+        this.setState({ faramErrors });
     }
 
     handleFaramValidationFailure = (faramErrors) => {
-        const {
-            currentTabId,
-            updateInputValues,
-        } = this.props;
-
-        updateInputValues({
-            tabId: currentTabId,
-            values: {},
-            uiState: {
-                faramErrors,
-                pristine: true,
-            },
-        });
+        this.setState({ faramErrors });
     }
 
     handleFaramValidationSuccess = (values) => {
@@ -417,6 +282,8 @@ class AddLead extends React.PureComponent {
             },
         } = this.props;
 
+        // TODO: create filter logic for assignee
+
         leadCreateRequest.do({
             values,
             handleLeadCreationFailure: this.handleLeadCreationFailure,
@@ -425,172 +292,101 @@ class AddLead extends React.PureComponent {
         });
     }
 
-    handleFaramChange = (values, faramErrors) => {
-        const uiState = {
-            faramErrors,
-            pristine: true,
-        };
-
-        const {
-            updateInputValues,
-            currentTabId,
-        } = this.props;
-
-        updateInputValues({
-            tabId: currentTabId,
-            uiState,
-            values,
-        });
-    }
-
     handleLeadCreationSuccess = ({
-        submittedLeadId,
-        submittedProjectId,
-        leadSubmittedSuccessfully,
-        errorDescription,
+        targetUrl,
         tabId,
     }) => {
         const { clearInputValue } = this.props;
+
         this.setState({
-            submittedLeadId,
-            submittedProjectId,
-            leadSubmittedSuccessfully,
-            errorDescription,
+            leadSubmitted: true,
+            targetUrl,
         });
+
         clearInputValue(tabId);
     }
 
     handleLeadCreationFailure = (faramErrors) => {
-        const {
-            $internal,
-            message,
-            ...fieldErrors
-        } = faramErrors;
-
-        if (Object.keys(fieldErrors).length > 0) {
-            this.setState({
-                submittedLeadId: undefined,
-                submittedProjectId: undefined,
-                leadSubmittedSuccessfully: undefined,
-            });
-
-            this.updateUiState({
-                faramErrors,
-                pristine: true,
-            });
-        } else {
-            this.setState({
-                submittedLeadId: undefined,
-                submittedProjectId: undefined,
-                leadSubmittedSuccessfully: false,
-                errorDescription: message || $internal.join(', '),
-            });
-        }
+        this.setState({
+            leadSubmitted: false,
+            targetUrl: undefined,
+            faramErrors,
+        });
     }
 
     handleLeadCreationFatal = () => {
         this.setState({
-            submittedLeadId: undefined,
-            submittedProjectId: undefined,
-            leadSubmittedSuccessfully: false,
-            errorDescription: undefined,
+            leadSubmitted: false,
+            targetUrl: undefined,
+            faramErrors: {
+                $internal: ['Some error occurred! Please check your internet connectivity.'],
+            },
         });
     }
 
-    renderSuccessMessage = () => {
-        const {
-            submittedLeadId,
-            submittedProjectId,
-        } = this.state;
-
-        const { webServerAddress } = this.props;
-        // TODO: use isDefined
-        const canAddEntry = !!submittedProjectId && !!submittedLeadId;
-        const targetUrl = `${webServerAddress}/projects/${submittedProjectId}/leads/${submittedLeadId}/edit-entries/`;
-
-        return (
-            <div className={styles.submitSuccess}>
-                <Icon
-                    className={styles.icon}
-                    name="checkmarkCircle"
-                />
-                <div className={styles.message}>
-                    { leadSubmitSuccessMessage }
-                </div>
-                {canAddEntry && (
-                    <a
-                        target="_blank"
-                        className={styles.addEntryLink}
-                        href={targetUrl}
-                    >
-                        { addEntryButtonTitle }
-                    </a>
-                )}
-            </div>
-        );
-    }
-
-    renderFailureMessage = () => (
-        <div className={styles.submitFailure}>
-            <Icon
-                className={styles.icon}
-                name="closeCircle"
-            />
-            <div className={styles.message}>
-                { leadSubmitFailureMessage }
-            </div>
-            <div className={styles.description}>
-                { this.state.errorDescription }
-            </div>
-        </div>
-    )
-
     render() {
         const {
+            searchedOrganizations,
+            organizations,
+
+            leadSubmitted,
+            targetUrl,
+            faramErrors,
+        } = this.state;
+
+        const {
             inputValues,
-            uiState,
-            projects,
             className,
-            leadOptions: {
-                assignee = [],
-                confidentiality = [],
-            },
             requests: {
                 webInfoRequest: {
                     pending: pendingWebInfo,
                 },
-                leadOptionsRequest: {
-                    pending: pendingLeadOptions,
-                },
                 projectsListRequest: {
                     pending: pendingProjectList,
+                    response: {
+                        results: projects,
+                    } = {},
                 },
+                leadOptionsRequest: {
+                    pending: pendingLeadOptions,
+                    response: {
+                        members,
+                        confidentiality,
+                    } = {},
+                },
+
+                organizationsRequest: {
+                    pending: pendingSearchedOrganizations,
+                },
+
                 leadCreateRequest: {
                     pending: pendingLeadCreate,
                 },
             },
+            goToAddOrganization,
         } = this.props;
 
-        const { faramErrors = emptyObject } = uiState;
-
-        const { leadSubmittedSuccessfully } = this.state;
-
-        const SuccessMessage = this.renderSuccessMessage;
-        const FailureMessage = this.renderFailureMessage;
-
-        if (isDefined(leadSubmittedSuccessfully)) {
-            return leadSubmittedSuccessfully
-                ? <SuccessMessage />
-                : <FailureMessage />;
+        if (leadSubmitted) {
+            return (
+                <SuccessMessage
+                    targetUrl={targetUrl}
+                />
+            );
         }
 
-        const disabled = pendingProjectList
+        // TODO: show authorRaw and publisherRaw
+
+        const isProjectSelected = inputValues.project && inputValues.project.length > 0;
+
+        const pending = pendingProjectList
             || pendingWebInfo
             || pendingLeadCreate;
 
         return (
             <div className={_cs(styles.addLead, className)}>
-                { disabled && <LoadingAnimation /> }
+                { pending && (
+                    <LoadingAnimation />
+                )}
                 <Faram
                     className={styles.inputs}
                     onChange={this.handleFaramChange}
@@ -599,54 +395,89 @@ class AddLead extends React.PureComponent {
                     schema={this.schema}
                     error={faramErrors}
                     value={inputValues}
-                    disabled={disabled}
+                    disabled={pending}
                 >
                     <NonFieldErrors faramElement />
                     <MultiSelectInput
                         faramElementName="project"
                         label={projectInputLabel}
                         options={projects}
-                        keySelector={projectKeySelector}
-                        labelSelector={projectLabelSelector}
+                        keySelector={AddLead.projectKeySelector}
+                        labelSelector={AddLead.projectLabelSelector}
                     />
                     <TextInput
                         faramElementName="title"
                         label={titleInputLabel}
                     />
-                    <TextInput
-                        faramElementName="source"
-                        label={sourceInputLabel}
-                    />
-                    <div className={styles.authorContainer} >
-                        <TextInput
+                    <div className={styles.inputButtonGroup}>
+                        <FaramBasicSelectInput
+                            className={styles.input}
+                            faramElementName="source"
+                            label={sourceInputLabel}
+                            options={organizations}
+                            keySelector={AddLead.organizationKeySelector}
+                            labelSelector={AddLead.organizationLabelSelector}
+                            disabled={pendingLeadOptions || pending || !isProjectSelected}
+
+                            searchOptions={searchedOrganizations}
+                            searchOptionsPending={pendingSearchedOrganizations}
+                            onOptionsChange={this.setOrganizations}
+                            onSearchValueChange={this.handleOrganizationSearchValueChange}
+                        />
+                        <div className={styles.buttons}>
+                            <Button
+                                title="Add Publisher"
+                                iconName="addPerson"
+                                onClick={goToAddOrganization}
+                                transparent
+                            />
+                        </div>
+                    </div>
+                    <div className={styles.inputButtonGroup}>
+                        <FaramBasicSelectInput
+                            className={styles.input}
                             faramElementName="author"
                             label={authorInputLabel}
+                            options={organizations}
+                            keySelector={AddLead.organizationKeySelector}
+                            labelSelector={AddLead.organizationLabelSelector}
+                            disabled={pendingLeadOptions || pending || !isProjectSelected}
+
+                            searchOptions={searchedOrganizations}
+                            searchOptionsPending={pendingSearchedOrganizations}
+                            onOptionsChange={this.setOrganizations}
+                            onSearchValueChange={this.handleOrganizationSearchValueChange}
                         />
-                        <Button
-                            title={sameAsPublisherButtonTitle}
-                            iconName="copy"
-                            className={styles.sameAsPublisherButton}
-                            onClick={this.handleSameAsPublisherButtonClick}
-                            transparent
-                        />
+                        <div className={styles.buttons}>
+                            <Button
+                                title={sameAsPublisherButtonTitle}
+                                iconName="copy"
+                                onClick={this.handleSameAsPublisherButtonClick}
+                                transparent
+                            />
+                            <Button
+                                title="Add Author"
+                                iconName="addPerson"
+                                onClick={goToAddOrganization}
+                                transparent
+                            />
+                        </div>
                     </div>
                     <SelectInput
                         faramElementName="confidentiality"
                         label={confidentialityInputLabel}
-                        options={confidentiality}
-                        keySelector={keySelector}
-                        labelSelector={labelSelector}
-                        renderEmpty={renderEmpty}
-                        disabled={pendingLeadOptions || disabled}
+                        options={isProjectSelected ? confidentiality : undefined}
+                        keySelector={AddLead.confidentialityKeySelector}
+                        labelSelector={AddLead.confidentialityLabelSelector}
+                        disabled={pendingLeadOptions || pending || !isProjectSelected}
                     />
                     <SelectInput
                         faramElementName="assignee"
                         label={assigneeInputLabel}
-                        options={assignee}
-                        keySelector={keySelector}
-                        labelSelector={labelSelector}
-                        renderEmpty={renderEmpty}
-                        disabled={pendingLeadOptions || disabled}
+                        options={isProjectSelected ? members : undefined}
+                        keySelector={AddLead.memberKeySelector}
+                        labelSelector={AddLead.memberLabelSelector}
+                        disabled={pendingLeadOptions || pending || !isProjectSelected}
                     />
                     <DateInput
                         faramElementName="publishedOn"
@@ -664,6 +495,7 @@ class AddLead extends React.PureComponent {
                         <PrimaryButton
                             type="submit"
                             pending={pendingLeadCreate}
+                            disabled={pending || pendingLeadOptions}
                         >
                             { submitButtonTitle }
                         </PrimaryButton>

@@ -4,25 +4,16 @@ import initialDomainDataState from '../initial-state/domainData';
 
 // TYPE
 
-export const UPDATE_INPUT_VALUE_ACTION = 'extension/UPDATE_INPUT_VALUE';
 export const UPDATE_INPUT_VALUES_ACTION = 'extension/UPDATE_INPUT_VALUES';
 export const CLEAR_INPUT_VALUE_ACTION = 'extension/CLEAR_INPUT_VALUES';
 export const CLEAR_DOMAIN_DATA_ACTION = 'extension/CLEAR_DOMAIN_DATA';
 
 // ACTION-CREATOR
 
-export const updateInputValueAction = ({ tabId, id, value }) => ({
-    type: UPDATE_INPUT_VALUE_ACTION,
-    tabId,
-    id,
-    value,
-});
-
-export const updateInputValuesAction = ({ tabId, values, uiState }) => ({
+export const updateInputValuesAction = ({ tabId, values }) => ({
     type: UPDATE_INPUT_VALUES_ACTION,
     tabId,
     values,
-    uiState,
 });
 
 export const clearInputValueAction = ({ tabId }) => ({
@@ -52,41 +43,16 @@ const clearInputValue = (state, action) => {
     return newState;
 };
 
-const updateInputValue = (state, action) => {
-    const {
-        tabId,
-        id,
-        value,
-    } = action;
-
-    const settings = {
-        [tabId]: { $auto: {
-            inputValues: { $auto: {
-                $merge: {
-                    [id]: value,
-                },
-            } },
-        } },
-    };
-
-    const newState = update(state, settings);
-    return newState;
-};
-
 const updateInputValues = (state, action) => {
     const {
         tabId,
-        uiState,
         values,
     } = action;
 
     const settings = {
         [tabId]: { $auto: {
             inputValues: { $auto: {
-                $merge: values,
-            } },
-            uiState: { $auto: {
-                $set: uiState,
+                $set: values,
             } },
         } },
     };
@@ -96,7 +62,6 @@ const updateInputValues = (state, action) => {
 };
 
 export const domainDataReducers = {
-    [UPDATE_INPUT_VALUE_ACTION]: updateInputValue,
     [UPDATE_INPUT_VALUES_ACTION]: updateInputValues,
     [CLEAR_INPUT_VALUE_ACTION]: clearInputValue,
     [CLEAR_DOMAIN_DATA_ACTION]: clearDomainData,
