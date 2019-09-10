@@ -45,10 +45,10 @@ const requests = {
             leadGroups: [], // this will not fetch any leadGroups
             organizations: unique(
                 [
-                    inputValues.publisher,
+                    inputValues.source,
                     inputValues.author,
                 ].filter(isDefined),
-                org => org.id,
+                id => id,
             ),
         }),
         onSuccess: ({ params, response }) => {

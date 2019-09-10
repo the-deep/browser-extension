@@ -91,6 +91,7 @@ class AddOrganization extends React.PureComponent {
                 addOrganizationRequest,
             },
         } = this.props;
+
         addOrganizationRequest.do({
             body: newValues,
             handleOrganizationCreateSuccess: this.handleOrganizationCreateSuccess,
@@ -106,6 +107,24 @@ class AddOrganization extends React.PureComponent {
         this.setState({
             organizationSubmitted: true,
         });
+
+        const {
+            setNavState,
+            getNavState,
+        } = this.props;
+
+        const navState = getNavState();
+
+        if (navState && navState.data.organizationField) {
+            setNavState({
+                sender: 'addOrganization',
+                receiver: 'addLead',
+                data: {
+                    organization,
+                    organizationField: navState.data.organizationField,
+                },
+            });
+        }
     }
 
     handleOrganizationCreateFailure = (faramErrors) => {

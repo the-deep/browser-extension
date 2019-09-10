@@ -38,7 +38,7 @@ import {
 } from '#redux';
 
 import SuccessMessage from './SuccessMessage';
-import { fillExtraInfo, fillWebInfo } from './utils';
+import { fillExtraInfo, fillWebInfo, fillOrganization } from './utils';
 import requests from './requests';
 import styles from './styles.scss';
 
@@ -165,6 +165,33 @@ class AddLead extends React.PureComponent {
         leadOptionsRequest.setDefaultParams({
             handleExtraInfoFill: this.handleExtraInfoFill,
         });
+    }
+
+    componentDidMount() {
+        const {
+            getNavState,
+            updateInputValues,
+            currentTabId,
+            inputValues,
+        } = this.props;
+        const navState = getNavState();
+        if (navState) {
+            const {
+                data: {
+                    organization,
+                    organizationField,
+                },
+            } = navState;
+
+            updateInputValues({
+                tabId: currentTabId,
+                values: fillOrganization(inputValues, organizationField, organization),
+            });
+
+            this.setState(state => ({
+                organizations: mergeLists(state.organizations, [organization]),
+            }));
+        }
     }
 
     setSearchedOrganizations = (searchedOrganizations) => {
@@ -324,6 +351,38 @@ class AddLead extends React.PureComponent {
         });
     }
 
+    handleAddPublisherClick = () => {
+        const {
+            setNavState,
+            goToAddOrganization,
+        } = this.props;
+
+        setNavState({
+            sender: 'addLead',
+            receiver: 'addOrganization',
+            data: {
+                organizationField: 'publisher',
+            },
+        });
+        goToAddOrganization();
+    }
+
+    handleAddAuthorClick = () => {
+        const {
+            setNavState,
+            goToAddOrganization,
+        } = this.props;
+
+        setNavState({
+            sender: 'addLead',
+            receiver: 'addOrganization',
+            data: {
+                organizationField: 'author',
+            },
+        });
+        goToAddOrganization();
+    }
+
     render() {
         const {
             searchedOrganizations,
@@ -428,7 +487,7 @@ class AddLead extends React.PureComponent {
                             <Button
                                 title="Add Publisher"
                                 iconName="addPerson"
-                                onClick={goToAddOrganization}
+                                onClick={this.handleAddPublisherClick}
                                 transparent
                             />
                         </div>
@@ -458,7 +517,7 @@ class AddLead extends React.PureComponent {
                             <Button
                                 title="Add Author"
                                 iconName="addPerson"
-                                onClick={goToAddOrganization}
+                                onClick={this.handleAddAuthorClick}
                                 transparent
                             />
                         </div>

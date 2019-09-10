@@ -17,14 +17,7 @@ const requests = {
             },
             response,
         }) => {
-            const newOrganization = {
-                key: response.id,
-                label: response.title,
-                shortName: response.shortName,
-                logo: response.logoUrl,
-            };
-
-            handleOrganizationCreateSuccess(newOrganization);
+            handleOrganizationCreateSuccess(response);
         },
         onFailure: ({
             params: {

@@ -130,6 +130,7 @@ class App extends React.PureComponent {
             pendingTabInfo: true,
             authenticated: false,
             activeView: ADD_LEAD_VIEW,
+            navState: undefined,
         };
 
         this.views = {
@@ -155,6 +156,9 @@ class App extends React.PureComponent {
                         pending: pendingTabInfo || pendingTokenRefresh,
                         error,
 
+                        setNavState: this.setNavState,
+                        getNavState: this.getNavState,
+
                         goToAddOrganization: this.goToAddOrganization,
                     };
                 },
@@ -179,6 +183,9 @@ class App extends React.PureComponent {
                     return {
                         className: styles.addLead,
 
+                        setNavState: this.setNavState,
+                        getNavState: this.getNavState,
+
                         authenticated,
                         pending: pendingTabInfo || pendingTokenRefresh,
                         error,
@@ -190,6 +197,9 @@ class App extends React.PureComponent {
             [SETTINGS_VIEW]: {
                 rendererParams: () => ({
                     className: styles.settings,
+
+                    setNavState: this.setNavState,
+                    getNavState: this.getNavState,
                 }),
                 component: Settings,
             },
@@ -362,16 +372,50 @@ class App extends React.PureComponent {
         });
     }
 
+    goToPage = (pageName) => {
+        const { navState } = this.state;
+        if (navState && navState.receiver !== pageName) {
+            console.warn(`Clearing stale navState for ${navState.receiver}`);
+            this.setState({
+                navState: undefined,
+            });
+        }
+
+        this.setState({
+            activeView: pageName,
+        });
+    }
+
+    getNavState = () => {
+        const {
+            navState,
+        } = this.state;
+        console.warn('Reading navState', navState);
+        return navState;
+    }
+
+    setNavState = ({ sender, receiver, data }) => {
+        const newNavState = {
+            sender,
+            receiver,
+            data,
+        };
+        console.warn('Writing navState', newNavState);
+        this.setState({
+            navState: newNavState,
+        });
+    }
+
     goToSettings = () => {
-        this.setState({ activeView: SETTINGS_VIEW });
+        this.goToPage(SETTINGS_VIEW);
     }
 
     goToAddLead = () => {
-        this.setState({ activeView: ADD_LEAD_VIEW });
+        this.goToPage(ADD_LEAD_VIEW);
     }
 
     goToAddOrganization = () => {
-        this.setState({ activeView: ADD_ORGANIZATION_VIEW });
+        this.goToPage(ADD_ORGANIZATION_VIEW);
     }
 
     render() {

@@ -1,3 +1,14 @@
+export function fillOrganization(inputValues, organizationField, organization) {
+    const values = { ...inputValues };
+    const organizationId = organization.id;
+    if (organizationField === 'author') {
+        values.author = organizationId;
+    } else if (organizationField === 'publisher') {
+        values.source = organizationId;
+    }
+    return values;
+}
+
 export function fillExtraInfo(inputValues, currentUserId, leadOptions = {}) {
     const values = { ...inputValues };
     if (!values.assignee) {
