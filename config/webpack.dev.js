@@ -7,6 +7,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const StylishPlugin = require('eslint/lib/cli-engine/formatters/stylish');
 // const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+
 const dotenv = require('dotenv').config({
     path: '.env',
 });
@@ -36,26 +37,29 @@ module.exports = (env) => {
             pathinfo: false,
         },
 
+        mode: 'development',
+
+        devtool: 'cheap-module-source-map',
+        // NOTE: cannot use 'cheap-module-eval-source-map' as chrome blocks it
+
         resolve: {
             extensions: ['.js', '.jsx', '.ts', '.tsx'],
         },
 
-        mode: 'development',
+        node: {
+            fs: 'empty',
+        },
 
         performance: {
             hints: 'warning',
         },
+
         stats: {
             assets: true,
             colors: true,
             errors: true,
             errorDetails: true,
             hash: true,
-        },
-        // NOTE: cannot use 'cheap-module-eval-source-map' as chrome blocks it
-        devtool: 'cheap-module-source-map',
-        node: {
-            fs: 'empty',
         },
 
         watch: true,
