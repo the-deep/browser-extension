@@ -1,8 +1,32 @@
+import { listToMap } from '@togglecorp/fujs';
+
+export function fillOrganization(inputValues, organizationField, organization) {
+    const values = { ...inputValues };
+    const organizationId = organization.id;
+    if (organizationField === 'author') {
+        values.author = organizationId;
+    } else if (organizationField === 'publisher') {
+        values.source = organizationId;
+    }
+    return values;
+}
+
 export function fillExtraInfo(inputValues, currentUserId, leadOptions = {}) {
     const values = { ...inputValues };
+
     if (!values.assignee) {
         values.assignee = currentUserId;
+    } else {
+        const memberMapping = listToMap(
+            leadOptions.members,
+            member => member.id,
+            () => true,
+        );
+        if (!memberMapping[values.assignee]) {
+            values.assignee = undefined;
+        }
     }
+
     if (
         !values.confidentiality
         && leadOptions.confidentiality
@@ -10,6 +34,7 @@ export function fillExtraInfo(inputValues, currentUserId, leadOptions = {}) {
     ) {
         values.confidentiality = leadOptions.confidentiality[0].key;
     }
+
     return values;
 }
 

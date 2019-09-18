@@ -38,7 +38,7 @@ import {
 } from '#redux';
 
 import SuccessMessage from './SuccessMessage';
-import { fillExtraInfo, fillWebInfo } from './utils';
+import { fillExtraInfo, fillWebInfo, fillOrganization } from './utils';
 import requests from './requests';
 import styles from './styles.scss';
 
@@ -74,6 +74,8 @@ const propTypes = {
     webServerAddress: PropTypes.string.isRequired,
 
     goToAddOrganization: PropTypes.func.isRequired,
+    setNavState: PropTypes.func.isRequired,
+    getNavState: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
@@ -122,7 +124,12 @@ class AddLead extends React.PureComponent {
 
     static organizationKeySelector = d => d.id;
 
-    static organizationLabelSelector = d => d.title;
+    static organizationLabelSelector = (d) => {
+        if (d.mergedAs) {
+            return d.mergedAs.title;
+        }
+        return d.title;
+    }
 
     constructor(props) {
         super(props);
@@ -165,6 +172,33 @@ class AddLead extends React.PureComponent {
         leadOptionsRequest.setDefaultParams({
             handleExtraInfoFill: this.handleExtraInfoFill,
         });
+    }
+
+    componentDidMount() {
+        const {
+            getNavState,
+            updateInputValues,
+            currentTabId,
+            inputValues,
+        } = this.props;
+        const navState = getNavState();
+        if (navState) {
+            const {
+                data: {
+                    organization,
+                    organizationField,
+                },
+            } = navState;
+
+            updateInputValues({
+                tabId: currentTabId,
+                values: fillOrganization(inputValues, organizationField, organization),
+            });
+
+            this.setState(state => ({
+                organizations: mergeLists(state.organizations, [organization]),
+            }));
+        }
     }
 
     setSearchedOrganizations = (searchedOrganizations) => {
@@ -282,8 +316,6 @@ class AddLead extends React.PureComponent {
             },
         } = this.props;
 
-        // TODO: create filter logic for assignee
-
         leadCreateRequest.do({
             values,
             handleLeadCreationFailure: this.handleLeadCreationFailure,
@@ -324,6 +356,38 @@ class AddLead extends React.PureComponent {
         });
     }
 
+    handleAddPublisherClick = () => {
+        const {
+            setNavState,
+            goToAddOrganization,
+        } = this.props;
+
+        setNavState({
+            sender: 'addLead',
+            receiver: 'addOrganization',
+            data: {
+                organizationField: 'publisher',
+            },
+        });
+        goToAddOrganization();
+    }
+
+    handleAddAuthorClick = () => {
+        const {
+            setNavState,
+            goToAddOrganization,
+        } = this.props;
+
+        setNavState({
+            sender: 'addLead',
+            receiver: 'addOrganization',
+            data: {
+                organizationField: 'author',
+            },
+        });
+        goToAddOrganization();
+    }
+
     render() {
         const {
             searchedOrganizations,
@@ -340,6 +404,12 @@ class AddLead extends React.PureComponent {
             requests: {
                 webInfoRequest: {
                     pending: pendingWebInfo,
+                    response: {
+                        sourceRaw,
+                        source,
+                        authorRaw,
+                        author,
+                    } = {},
                 },
                 projectsListRequest: {
                     pending: pendingProjectList,
@@ -363,7 +433,6 @@ class AddLead extends React.PureComponent {
                     pending: pendingLeadCreate,
                 },
             },
-            goToAddOrganization,
         } = this.props;
 
         if (leadSubmitted) {
@@ -373,8 +442,6 @@ class AddLead extends React.PureComponent {
                 />
             );
         }
-
-        // TODO: show authorRaw and publisherRaw
 
         const isProjectSelected = inputValues.project && inputValues.project.length > 0;
 
@@ -418,6 +485,7 @@ class AddLead extends React.PureComponent {
                             keySelector={AddLead.organizationKeySelector}
                             labelSelector={AddLead.organizationLabelSelector}
                             disabled={pendingLeadOptions || pending || !isProjectSelected}
+                            hint={!source && sourceRaw ? `Suggestion: ${sourceRaw}` : undefined}
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
@@ -428,7 +496,7 @@ class AddLead extends React.PureComponent {
                             <Button
                                 title="Add Publisher"
                                 iconName="addPerson"
-                                onClick={goToAddOrganization}
+                                onClick={this.handleAddPublisherClick}
                                 transparent
                             />
                         </div>
@@ -442,6 +510,7 @@ class AddLead extends React.PureComponent {
                             keySelector={AddLead.organizationKeySelector}
                             labelSelector={AddLead.organizationLabelSelector}
                             disabled={pendingLeadOptions || pending || !isProjectSelected}
+                            hint={!author && authorRaw ? `Suggestion: ${authorRaw}` : undefined}
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
@@ -458,7 +527,7 @@ class AddLead extends React.PureComponent {
                             <Button
                                 title="Add Author"
                                 iconName="addPerson"
-                                onClick={goToAddOrganization}
+                                onClick={this.handleAddAuthorClick}
                                 transparent
                             />
                         </div>

@@ -30,6 +30,8 @@ const propTypes = {
         organizationTypesRequest: PropTypes.object.isRequired,
     }).isRequired,
     className: PropTypes.string,
+    setNavState: PropTypes.func.isRequired,
+    getNavState: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
@@ -91,6 +93,7 @@ class AddOrganization extends React.PureComponent {
                 addOrganizationRequest,
             },
         } = this.props;
+
         addOrganizationRequest.do({
             body: newValues,
             handleOrganizationCreateSuccess: this.handleOrganizationCreateSuccess,
@@ -100,12 +103,27 @@ class AddOrganization extends React.PureComponent {
     }
 
     handleOrganizationCreateSuccess = (organization) => {
-        // TODO:
-        // 1. set this to either publisher or author later
-        // 2. add this organization to organization list
         this.setState({
             organizationSubmitted: true,
         });
+
+        const {
+            setNavState,
+            getNavState,
+        } = this.props;
+
+        const navState = getNavState();
+
+        if (navState && navState.data.organizationField) {
+            setNavState({
+                sender: 'addOrganization',
+                receiver: 'addLead',
+                data: {
+                    organization,
+                    organizationField: navState.data.organizationField,
+                },
+            });
+        }
     }
 
     handleOrganizationCreateFailure = (faramErrors) => {
