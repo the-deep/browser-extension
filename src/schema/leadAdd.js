@@ -66,6 +66,18 @@ const leadAddSchema = [];
         fields: {
             id: { type: 'uint' },
             title: { type: 'string' },
+            mergedAs: {
+                type: {
+                    doc: {
+                        name: 'parentOrganization',
+                        description: 'Schema for parent organization',
+                    },
+                    fields: {
+                        id: { type: 'uint' },
+                        title: { type: 'string' },
+                    },
+                },
+            },
         },
     };
     leadAddSchema.push({ name, schema });
@@ -103,11 +115,17 @@ const leadAddSchema = [];
             description: 'Schema for lead options /lead-options/',
         },
         fields: {
+            hasEmmLeads: { type: 'boolean' },
             projects: { type: 'array.unknown' },
-            status: { type: 'array.status' },
             leadGroups: { type: 'array.unknown' },
+            emmEntities: { type: 'array.unknown' },
+            emmKeywords: { type: 'array.unknown' },
+            emmRiskFactors: { type: 'array.unknown' },
+            status: { type: 'array.status' },
             members: { type: 'array.member' },
-            organizations: { type: 'array.organization' },
+            organizations: {
+                type: 'array.organization',
+            },
             confidentiality: { type: 'array.confidentiality' },
         },
     };
@@ -182,6 +200,8 @@ const leadAddSchema = [];
             thumbnailHeight: { type: 'int' },
             thumbnailWidth: { type: 'int' },
             thumbnail: { type: 'string' }, // url
+            emmEntities: { type: 'array.uknown' },
+            emmTriggers: { type: 'array.uknown' },
         },
     };
     leadAddSchema.push({ name, schema });

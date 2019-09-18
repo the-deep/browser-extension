@@ -24,6 +24,18 @@ export const getApiServerAddress = () => apiServerAddressSelector(store.getState
 export const getApiEndpoint = () => (`${getApiServerAddress()}/api/v1`);
 export const getWebEndpoint = getWebServerAddress;
 
+function getVersionedUrl(endpoint, url) {
+    const oldVersionString = '/v1';
+    const versionString = '/v2';
+    if (!url.startsWith(versionString)) {
+        return `${endpoint}${url}`;
+    }
+    const startIndex = 0;
+    const endIndex = endpoint.search(oldVersionString);
+    const newEndpoint = endpoint.slice(startIndex, endIndex);
+    return `${newEndpoint}${url}`;
+}
+
 const alterResponseErrorToFaramError = (e) => {
     let errors = e;
 
@@ -113,7 +125,7 @@ const CustomRequestCoordinator = createRequestCoordinator({
             return url;
         }
 
-        return `${getApiEndpoint()}${url}`;
+        return getVersionedUrl(getApiEndpoint(), url);
     },
     transformResponse: (body, request) => {
         const {

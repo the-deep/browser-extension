@@ -23,7 +23,7 @@ const requests = {
         },
     },
     webInfoRequest: {
-        url: '/web-info-extract/',
+        url: '/v2/web-info-extract/',
         body: ({ props: { currentTabId } }) => ({ url: currentTabId }),
         method: methods.POST,
         onSuccess: ({ params, response }) => {
@@ -42,7 +42,10 @@ const requests = {
         method: methods.POST,
         body: ({ props: { inputValues } }) => ({
             projects: inputValues.project,
-            leadGroups: [], // this will not fetch any leadGroups
+            leadGroups: [], // this will not fetch
+            emmEntities: [], // this will not fetch
+            emmKeywords: [], // this will not fetch
+            emmRiskFactors: [], // this will not fetch
             organizations: unique(
                 [
                     inputValues.source,
@@ -84,7 +87,7 @@ const requests = {
         },
     },
     leadCreateRequest: {
-        url: '/leads/',
+        url: '/v2/leads/',
         method: methods.POST,
         body: ({ params }) => ({
             ...params.values,

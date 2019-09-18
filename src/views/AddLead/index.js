@@ -124,7 +124,12 @@ class AddLead extends React.PureComponent {
 
     static organizationKeySelector = d => d.id;
 
-    static organizationLabelSelector = d => d.title;
+    static organizationLabelSelector = (d) => {
+        if (d.mergedAs) {
+            return d.mergedAs.title;
+        }
+        return d.title;
+    }
 
     constructor(props) {
         super(props);
