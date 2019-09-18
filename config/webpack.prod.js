@@ -4,11 +4,11 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CircularDependencyPlugin = require('circular-dependency-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const StylishPlugin = require('eslint/lib/cli-engine/formatters/stylish');
-// const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const StylishPlugin = require('eslint/lib/cli-engine/formatters/stylish');
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+// const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const dotenv = require('dotenv').config({
     path: '.env',
@@ -19,24 +19,34 @@ const appBase = process.cwd();
 const eslintFile = path.resolve(appBase, '.eslintrc-loader.js');
 const appSrc = path.resolve(appBase, 'src/');
 const appDist = path.resolve(appBase, 'build/');
-const appIndexJs = path.resolve(appBase, 'src/index.js');
-const appIndexHtml = path.resolve(appBase, 'public/index.html');
+const publicSrc = path.resolve(appBase, 'public/');
+const appIndexJs = path.resolve(appSrc, 'index.js');
+const appIndexHtml = path.resolve(publicSrc, 'index.html');
 
 module.exports = (env) => {
     const ENV_VARS = { ...dotenv.pared, ...getEnvVariables(env) };
+
+    console.warn(ENV_VARS);
 
     return {
         entry: appIndexJs,
         output: {
             path: appDist,
             publicPath: '/',
-            chunkFilename: 'js/[name].[chunkhash].js',
-            filename: 'js/[name].[contenthash].js',
+            chunkFilename: 'js/[name].[hash].js',
+            filename: 'js/[name].[hash].js',
             sourceMapFilename: 'sourcemaps/[file].map',
+            pathinfo: false,
         },
+
         mode: 'production',
 
         devtool: 'source-map',
+
+        resolve: {
+            extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        },
+
         node: {
             fs: 'empty',
         },
@@ -146,7 +156,15 @@ module.exports = (env) => {
                 allowAsyncCycles: false,
                 cwd: appBase,
             }),
-            new CleanWebpackPlugin([appDist], { root: appBase }),
+            // Remove build folder anyway
+            new CleanWebpackPlugin({
+                cleanStaleWebpackAssets: false,
+            }),
+            new CopyWebpackPlugin([
+                { context: publicSrc, to: appDist, from: 'background.js' },
+                { context: publicSrc, to: appDist, from: 'deep-logo.png' },
+                { context: publicSrc, to: appDist, from: 'manifest.json' },
+            ]),
             new HtmlWebpackPlugin({
                 template: appIndexHtml,
                 filename: './index.html',
@@ -158,9 +176,6 @@ module.exports = (env) => {
                 chunkFilename: 'css/[id].css',
             }),
             new webpack.HashedModuleIdsPlugin(),
-            new CopyWebpackPlugin([
-                { from: 'assets', to: '.' },
-            ]),
         ],
     };
 };
