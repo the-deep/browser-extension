@@ -50,11 +50,11 @@ const urlInputLabel = 'Url';
 const publishedOnInputLabel = 'Published on';
 const assigneeInputLabel = 'Assignee';
 const confidentialityInputLabel = 'Confidentiality';
-const sourceInputLabel = 'Publisher';
-const authorInputLabel = 'Author';
+const sourceInputLabel = 'Publishing Organization';
+const authorInputLabel = 'Authoring Organization';
 const titleInputLabel = 'Title';
 const projectInputLabel = 'Project';
-const sameAsPublisherButtonTitle = 'Same as publisher';
+const sameAsPublisherButtonTitle = 'Same as publishing organization';
 
 const propTypes = {
     className: PropTypes.string,
@@ -494,7 +494,7 @@ class AddLead extends React.PureComponent {
                         />
                         <div className={styles.buttons}>
                             <Button
-                                title="Add Publisher"
+                                title="Add Publishing Organization"
                                 iconName="addPerson"
                                 onClick={this.handleAddPublisherClick}
                                 transparent
@@ -525,7 +525,7 @@ class AddLead extends React.PureComponent {
                                 transparent
                             />
                             <Button
-                                title="Add Author"
+                                title="Add Authoring Organization"
                                 iconName="addPerson"
                                 onClick={this.handleAddAuthorClick}
                                 transparent
