@@ -63,7 +63,7 @@ class AddOrganization extends React.PureComponent {
                 title: [requiredCondition],
                 shortName: [requiredCondition],
                 // longName: [requiredCondition],
-                url: [urlCondition, requiredCondition],
+                url: [urlCondition],
                 organizationType: [requiredCondition],
             },
         };
@@ -200,17 +200,17 @@ class AddOrganization extends React.PureComponent {
                         label="Abbreviation / Acronym"
                         placeholder="eg. UN OCHA"
                     />
-                    <TextInput
-                        faramElementName="url"
-                        label="URL"
-                        placeholder="https://www.unicef.org"
-                    />
                     <SelectInput
                         faramElementName="organizationType"
                         label="Organization Type"
                         options={organizationTypeList}
                         keySelector={AddOrganization.idSelector}
                         labelSelector={AddOrganization.titleSelector}
+                    />
+                    <TextInput
+                        faramElementName="url"
+                        label="URL"
+                        placeholder="https://www.unicef.org"
                     />
                     <div className={styles.actionButtons}>
                         <PrimaryButton
