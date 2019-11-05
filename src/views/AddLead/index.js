@@ -157,7 +157,7 @@ class AddLead extends React.PureComponent {
                 project: [requiredCondition],
                 title: [requiredCondition],
                 source: [requiredCondition],
-                author: [requiredCondition],
+                author: [],
                 confidentiality: [requiredCondition],
                 assignee: [requiredCondition],
                 publishedOn: [requiredCondition],
