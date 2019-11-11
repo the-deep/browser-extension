@@ -51,7 +51,7 @@ const alterResponseErrorToFaramError = (e) => {
 
                 acc.nonFieldErrors = acc.nonFieldErrors.concat(nonFieldErrors);
 
-                Object.keys(formFieldErrors || {}).forEach(
+                Object.keys(formFieldErrors).forEach(
                     (key) => {
                         if (acc[key]) {
                             // append only unique errors
