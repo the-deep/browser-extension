@@ -1,5 +1,8 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import produce from 'immer';
+import titleCase from 'title';
+
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import {
@@ -16,6 +19,7 @@ import Faram, {
 import Button from '#rsca/Button';
 import PrimaryButton from '#rsca/Button/PrimaryButton';
 import DateInput from '#rsci/DateInput';
+import AccentButton from '#rsca/Button/AccentButton';
 import MultiSelectInput from '#rsci/MultiSelectInput';
 import NonFieldErrors from '#rsci/NonFieldErrors';
 import SelectInput from '#rsci/SelectInput';
@@ -38,7 +42,15 @@ import {
 } from '#redux';
 
 import SuccessMessage from './SuccessMessage';
-import { fillExtraInfo, fillWebInfo, fillOrganization } from './utils';
+import BadgeInput from './BadgeInput';
+import {
+    fillExtraInfo,
+    fillWebInfo,
+    fillOrganization,
+    capitalizeOnlyFirstLetter,
+    trimFileExtension,
+    getTitleFromUrl,
+} from './utils';
 import requests from './requests';
 import styles from './styles.scss';
 
@@ -65,6 +77,7 @@ const propTypes = {
     currentUserId: PropTypes.number,
     requests: PropTypes.shape({
         webInfoRequest: PropTypes.object.isRequired,
+        webInfoDataRequest: PropTypes.object.isRequired,
         leadOptionsRequest: PropTypes.object.isRequired,
         projectsListRequest: PropTypes.object.isRequired,
         leadCreateRequest: PropTypes.object.isRequired,
@@ -105,45 +118,42 @@ function mergeLists(foo, bar) {
     );
 }
 
+const memberKeySelector = d => d.id;
+const memberLabelSelector = d => d.displayName;
+const confidentialityKeySelector = d => d.key;
+const confidentialityLabelSelector = d => d.value;
+const projectKeySelector = d => d.id;
+const projectLabelSelector = d => d.title;
+const organizationKeySelector = d => d.id;
+const organizationLabelSelector = (d) => {
+    if (d.mergedAs) {
+        return d.mergedAs.title;
+    }
+    return d.title;
+};
+
 class AddLead extends React.PureComponent {
     static propTypes = propTypes;
 
     static defaultProps = defaultProps;
-
-    static memberKeySelector = d => d.id;
-
-    static memberLabelSelector = d => d.displayName;
-
-    static confidentialityKeySelector = d => d.key;
-
-    static confidentialityLabelSelector = d => d.value;
-
-    static projectKeySelector = d => d.id;
-
-    static projectLabelSelector = d => d.title;
-
-    static organizationKeySelector = d => d.id;
-
-    static organizationLabelSelector = (d) => {
-        if (d.mergedAs) {
-            return d.mergedAs.title;
-        }
-        return d.title;
-    }
 
     constructor(props) {
         super(props);
 
         const {
             requests: {
-                webInfoRequest,
+                webInfoDataRequest,
                 leadOptionsRequest,
             },
+            currentTabId,
         } = this.props;
 
         this.state = {
             leadSubmitted: false,
             targetUrl: undefined,
+            formatTitleAsTitleCase: true,
+            suggestedTitleFromUrl: getTitleFromUrl(currentTabId),
+            suggestedTitleFromExtraction: undefined,
 
             searchedOrganizations: [],
             // Organizations filled by web-info-extract and lead-options
@@ -166,7 +176,7 @@ class AddLead extends React.PureComponent {
             },
         };
 
-        webInfoRequest.setDefaultParams({
+        webInfoDataRequest.setDefaultParams({
             handleWebInfoFill: this.handleWebInfoFill,
         });
         leadOptionsRequest.setDefaultParams({
@@ -227,6 +237,34 @@ class AddLead extends React.PureComponent {
         }
     }
 
+    handleAutoFormatTitleButton = () => {
+        const {
+            currentTabId,
+            inputValues,
+            updateInputValues,
+        } = this.props;
+        const { formatTitleAsTitleCase } = this.state;
+
+        const newValues = produce(inputValues, (safeValues) => {
+            const { title } = inputValues;
+
+            if (isFalsyString(title)) {
+                return;
+            }
+
+            // eslint-disable-next-line no-param-reassign
+            safeValues.title = formatTitleAsTitleCase
+                ? titleCase(title) : capitalizeOnlyFirstLetter(title);
+            // eslint-disable-next-line no-param-reassign
+            safeValues.title = trimFileExtension(safeValues.title);
+        });
+        this.setState({ formatTitleAsTitleCase: !formatTitleAsTitleCase });
+        updateInputValues({
+            tabId: currentTabId,
+            values: newValues,
+        });
+    }
+
     handleExtraInfoFill = (leadOptions) => {
         const {
             currentTabId,
@@ -268,6 +306,7 @@ class AddLead extends React.PureComponent {
                 organizations: mergeLists(state.organizations, newOrgs),
             }));
         }
+        this.setState({ suggestedTitleFromExtraction: webInfo.title });
 
         updateInputValues({
             tabId: currentTabId,
@@ -396,6 +435,9 @@ class AddLead extends React.PureComponent {
             leadSubmitted,
             targetUrl,
             faramErrors,
+
+            suggestedTitleFromUrl,
+            suggestedTitleFromExtraction,
         } = this.state;
 
         const {
@@ -443,6 +485,10 @@ class AddLead extends React.PureComponent {
             );
         }
 
+        const {
+            title,
+        } = inputValues;
+
         const isProjectSelected = inputValues.project && inputValues.project.length > 0;
 
         const pending = pendingProjectList
@@ -464,26 +510,72 @@ class AddLead extends React.PureComponent {
                     value={inputValues}
                     disabled={pending}
                 >
-                    <NonFieldErrors faramElement />
+                    <NonFieldErrors
+                        faramElement
+                        persistent={false}
+                    />
                     <MultiSelectInput
                         faramElementName="project"
                         label={projectInputLabel}
                         options={projects}
-                        keySelector={AddLead.projectKeySelector}
-                        labelSelector={AddLead.projectLabelSelector}
+                        keySelector={projectKeySelector}
+                        labelSelector={projectLabelSelector}
                     />
-                    <TextInput
-                        faramElementName="title"
-                        label={titleInputLabel}
-                    />
+                    <div className={_cs(styles.inputButtonGroup, styles.titleGroup)}>
+                        <TextInput
+                            className={styles.input}
+                            faramElementName="title"
+                            label={titleInputLabel}
+                        />
+                        <div className={styles.buttons}>
+                            <AccentButton
+                                className={styles.smallButton}
+                                title="Format"
+                                onClick={this.handleAutoFormatTitleButton}
+                            >
+                                Format
+                            </AccentButton>
+                        </div>
+                    </div>
+                    {(
+                        (
+                            suggestedTitleFromUrl
+                            && (title !== suggestedTitleFromUrl)
+                        ) || (
+                            suggestedTitleFromExtraction
+                            && (title !== suggestedTitleFromExtraction)
+                        )
+                    ) && (
+                        <>
+                            <h5 className={styles.suggestionLabel}>
+                                Title suggestions:
+                            </h5>
+                            <div className={styles.suggestions}>
+                                {(title !== suggestedTitleFromUrl) && (
+                                    <BadgeInput
+                                        className={styles.suggestionBadge}
+                                        faramElementName="title"
+                                        title={suggestedTitleFromUrl}
+                                    />
+                                )}
+                                {(title !== suggestedTitleFromExtraction) && (
+                                    <BadgeInput
+                                        className={styles.suggestionBadge}
+                                        faramElementName="title"
+                                        title={suggestedTitleFromExtraction}
+                                    />
+                                )}
+                            </div>
+                        </>
+                    )}
                     <div className={styles.inputButtonGroup}>
                         <FaramBasicSelectInput
                             className={styles.input}
                             faramElementName="source"
                             label={sourceInputLabel}
                             options={organizations}
-                            keySelector={AddLead.organizationKeySelector}
-                            labelSelector={AddLead.organizationLabelSelector}
+                            keySelector={organizationKeySelector}
+                            labelSelector={organizationLabelSelector}
                             disabled={pendingLeadOptions || pending || !isProjectSelected}
                             hint={!source && sourceRaw ? `Suggestion: ${sourceRaw}` : undefined}
 
@@ -507,8 +599,8 @@ class AddLead extends React.PureComponent {
                             faramElementName="author"
                             label={authorInputLabel}
                             options={organizations}
-                            keySelector={AddLead.organizationKeySelector}
-                            labelSelector={AddLead.organizationLabelSelector}
+                            keySelector={organizationKeySelector}
+                            labelSelector={organizationLabelSelector}
                             disabled={pendingLeadOptions || pending || !isProjectSelected}
                             hint={!author && authorRaw ? `Suggestion: ${authorRaw}` : undefined}
 
@@ -536,16 +628,16 @@ class AddLead extends React.PureComponent {
                         faramElementName="confidentiality"
                         label={confidentialityInputLabel}
                         options={isProjectSelected ? confidentiality : undefined}
-                        keySelector={AddLead.confidentialityKeySelector}
-                        labelSelector={AddLead.confidentialityLabelSelector}
+                        keySelector={confidentialityKeySelector}
+                        labelSelector={confidentialityLabelSelector}
                         disabled={pendingLeadOptions || pending || !isProjectSelected}
                     />
                     <SelectInput
                         faramElementName="assignee"
                         label={assigneeInputLabel}
                         options={isProjectSelected ? members : undefined}
-                        keySelector={AddLead.memberKeySelector}
-                        labelSelector={AddLead.memberLabelSelector}
+                        keySelector={memberKeySelector}
+                        labelSelector={memberLabelSelector}
                         disabled={pendingLeadOptions || pending || !isProjectSelected}
                     />
                     <DateInput

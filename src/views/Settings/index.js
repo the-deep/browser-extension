@@ -15,7 +15,7 @@ import {
     setSettingsAction,
     webServerAddressSelector,
     apiServerAddressSelector,
-    serverlessServerAddressSelector,
+    serverlessAddressSelector,
     serverSelector,
 } from '#redux';
 
@@ -24,7 +24,7 @@ import styles from './styles.scss';
 const mapStateToProps = state => ({
     webServerAddress: webServerAddressSelector(state),
     apiServerAddress: apiServerAddressSelector(state),
-    serverlessServerAddress: serverlessServerAddressSelector(state),
+    serverlessAddress: serverlessAddressSelector(state),
     server: serverSelector(state),
 });
 
@@ -35,7 +35,7 @@ const mapDispatchToProps = dispatch => ({
 const propTypes = {
     webServerAddress: PropTypes.string.isRequired,
     apiServerAddress: PropTypes.string.isRequired,
-    serverlessServerAddress: PropTypes.string.isRequired,
+    serverlessAddress: PropTypes.string.isRequired,
     setSettings: PropTypes.func.isRequired,
     server: PropTypes.string.isRequired,
 };
@@ -50,8 +50,8 @@ const webServerAddressTitle = 'Web server address';
 const webServerAddressInputPlaceholder = 'eg: https://thedeep.io';
 const apiServerAddressTitle = 'API server address';
 const apiServerAddressInputPlaceholder = 'eg: https://api.thedeep.io';
-const serverlessServerAddressTitle = 'Serverless server address';
-const serverlessServerAddressInputPlaceholder = 'eg: https://services.thedeep.io';
+const serverlessAddressTitle = 'Serverless server address';
+const serverlessAddressInputPlaceholder = 'eg: https://services.thedeep.io';
 const saveSuccessfulMessage = 'Settings saved successfully';
 // const saveFailureMessage = 'Failed to save';
 
@@ -71,7 +71,7 @@ class Settings extends React.PureComponent {
                 server: props.server,
                 webServerAddress: props.webServerAddress,
                 apiServerAddress: props.apiServerAddress,
-                serverlessServerAddress: props.serverlessServerAddress,
+                serverlessAddress: props.serverlessAddress,
             },
             faramErrors: {},
             pristine: true,
@@ -89,7 +89,7 @@ class Settings extends React.PureComponent {
                 server: [requiredCondition],
                 webServerAddress: conditionForUrl,
                 apiServerAddress: conditionForUrl,
-                serverlessServerAddress: conditionForUrl,
+                serverlessAddress: conditionForUrl,
             },
         };
 
@@ -140,19 +140,19 @@ class Settings extends React.PureComponent {
         };
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
         const {
             server: newServer,
             webServerAddress: newWebServerAddress,
             apiServerAddress: newApiServerAddress,
-            serverlessServerAddress: newServerlessServerAddress,
+            serverlessAddress: newServerlessServerAddress,
         } = nextProps;
 
         const {
             server: oldServer,
             webServerAddress: oldWebServerAddress,
             apiServerAddress: oldApiServerAddress,
-            serverlessServerAddress: oldServerlessServerAddress,
+            serverlessAddress: oldServerlessServerAddress,
         } = this.props;
 
         if (newServer !== oldServer
@@ -165,7 +165,7 @@ class Settings extends React.PureComponent {
                     server: newServer,
                     webServerAddress: newWebServerAddress,
                     apiServerAddress: newApiServerAddress,
-                    serverlessServerAddress: newServerlessServerAddress,
+                    serverlessAddress: newServerlessServerAddress,
                 },
                 faramErrors: {},
                 pristine: true,
@@ -207,7 +207,7 @@ class Settings extends React.PureComponent {
             const serverAddress = this.serverAddresses[newValues.server];
             newValues.webServerAddress = serverAddress.web;
             newValues.apiServerAddress = serverAddress.api;
-            newValues.serverlessServerAddress = serverAddress.serverless;
+            newValues.serverlessAddress = serverAddress.serverless;
         }
 
         this.setState({
@@ -274,9 +274,9 @@ class Settings extends React.PureComponent {
                         />
                         <TextInput
                             className={styles.input}
-                            faramElementName="serverlessServerAddress"
-                            label={serverlessServerAddressTitle}
-                            placeholder={serverlessServerAddressInputPlaceholder}
+                            faramElementName="serverlessAddress"
+                            label={serverlessAddressTitle}
+                            placeholder={serverlessAddressInputPlaceholder}
                             readOnly={!isCustomInput}
                         />
                     </div>

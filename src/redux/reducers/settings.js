@@ -12,13 +12,13 @@ export const SET_SETTINGS_ACTION = 'auth/SET_SETTINGS';
 export const setSettingsAction = ({
     webServerAddress,
     apiServerAddress,
-    serverlessServerAddress,
+    serverlessAddress,
     server,
 }) => ({
     type: SET_SETTINGS_ACTION,
     webServerAddress,
     apiServerAddress,
-    serverlessServerAddress,
+    serverlessAddress,
     server,
 });
 
@@ -29,14 +29,14 @@ const setSettings = (state, action) => {
         server,
         webServerAddress,
         apiServerAddress,
-        serverlessServerAddress,
+        serverlessAddress,
     } = action;
 
     const settings = {
         server: { $set: server },
         webServerAddress: { $set: getWebsiteFromUrl(webServerAddress) },
         apiServerAddress: { $set: getWebsiteFromUrl(apiServerAddress) },
-        serverlessServerAddress: { $set: getWebsiteFromUrl(serverlessServerAddress) },
+        serverlessAddress: { $set: getWebsiteFromUrl(serverlessAddress) },
     };
 
     const newState = update(state, settings);

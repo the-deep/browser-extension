@@ -24,20 +24,20 @@ const requestOptions = {
     },
     webInfoRequest: {
         url: '/web-info-extract/',
-        query: ({ params: { url } }) => ({ url }),
+        query: ({ props: { currentTabId } }) => ({ url: currentTabId }),
         method: methods.GET,
         onMount: ({ props: { currentTabId } }) => currentTabId && currentTabId.length > 0,
         onPropsChanged: ['currentTabId'],
-        onSuccess: ({ params, props: { requests }, response }) => {
+        onSuccess: ({ props: { requests, currentTabId }, response }) => {
             if (requests.webInfoDataRequest) {
                 requests.webInfoDataRequest.do({
-                    url: params.url,
+                    url: currentTabId,
                     title: response.title,
                     date: response.date,
                     website: response.website,
                     country: response.country,
-                    source: response.source,
-                    author: response.author,
+                    source: response.sourceRaw,
+                    author: response.authorRaw,
                 });
             }
         },

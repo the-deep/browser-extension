@@ -247,7 +247,7 @@ class App extends React.PureComponent {
         }
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
         const {
             clearDomainData,
             requests: {
