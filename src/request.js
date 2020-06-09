@@ -10,6 +10,7 @@ import {
 import {
     webServerAddressSelector,
     apiServerAddressSelector,
+    serverlessServerAddressSelector,
     tokenSelector,
 } from '#redux';
 
@@ -21,6 +22,7 @@ import schema from '#schema';
 
 export const getWebServerAddress = () => webServerAddressSelector(store.getState());
 export const getApiServerAddress = () => apiServerAddressSelector(store.getState());
+export const getServerlessServerAddress = () => serverlessServerAddressSelector(store.getState());
 export const getApiEndpoint = () => (`${getApiServerAddress()}/api/v1`);
 export const getWebEndpoint = getWebServerAddress;
 
@@ -120,7 +122,20 @@ const CustomRequestCoordinator = createRequestCoordinator({
         } = props;
         return otherProps;
     },
-    transformUrl: (url) => {
+    transformUrl: (url, request) => {
+        const {
+            extras = {},
+        } = request;
+
+        if (extras.type === 'serverless') {
+            const serverlessEndpoint = getServerlessServerAddress();
+            if (isNotDefined(serverlessEndpoint)) {
+                return `https://services.thedeep.io/${url}`;
+            }
+
+            return `${getServerlessServerAddress()}${url}`;
+        }
+
         if (/^https?:\/\//i.test(url)) {
             return url;
         }

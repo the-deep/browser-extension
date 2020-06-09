@@ -9,10 +9,16 @@ export const SET_SETTINGS_ACTION = 'auth/SET_SETTINGS';
 
 // ACTION-CREATOR
 
-export const setSettingsAction = ({ webServerAddress, apiServerAddress, server }) => ({
+export const setSettingsAction = ({
+    webServerAddress,
+    apiServerAddress,
+    serverlessServerAddress,
+    server,
+}) => ({
     type: SET_SETTINGS_ACTION,
     webServerAddress,
     apiServerAddress,
+    serverlessServerAddress,
     server,
 });
 
@@ -23,12 +29,14 @@ const setSettings = (state, action) => {
         server,
         webServerAddress,
         apiServerAddress,
+        serverlessServerAddress,
     } = action;
 
     const settings = {
         server: { $set: server },
         webServerAddress: { $set: getWebsiteFromUrl(webServerAddress) },
         apiServerAddress: { $set: getWebsiteFromUrl(apiServerAddress) },
+        serverlessServerAddress: { $set: getWebsiteFromUrl(serverlessServerAddress) },
     };
 
     const newState = update(state, settings);
