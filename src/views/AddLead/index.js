@@ -8,6 +8,7 @@ import { connect } from 'react-redux';
 import {
     _cs,
     isFalsyString,
+    isDefined,
     unique,
 } from '@togglecorp/fujs';
 import Faram, {
@@ -446,6 +447,9 @@ class AddLead extends React.PureComponent {
             requests: {
                 webInfoRequest: {
                     pending: pendingWebInfo,
+                },
+                webInfoDataRequest: {
+                    pending: pendingWebInfoData,
                     response: {
                         sourceRaw,
                         source,
@@ -493,7 +497,12 @@ class AddLead extends React.PureComponent {
 
         const pending = pendingProjectList
             || pendingWebInfo
+            || pendingWebInfoData
             || pendingLeadCreate;
+
+        const suggestions = unique([suggestedTitleFromUrl, suggestedTitleFromExtraction])
+            .filter(isDefined)
+            .filter(suggestion => suggestion !== title);
 
         return (
             <div className={_cs(styles.addLead, className)}>
@@ -533,38 +542,24 @@ class AddLead extends React.PureComponent {
                                 title="Format"
                                 onClick={this.handleAutoFormatTitleButton}
                             >
-                                Format
+                                Aa
                             </AccentButton>
                         </div>
                     </div>
-                    {(
-                        (
-                            suggestedTitleFromUrl
-                            && (title !== suggestedTitleFromUrl)
-                        ) || (
-                            suggestedTitleFromExtraction
-                            && (title !== suggestedTitleFromExtraction)
-                        )
-                    ) && (
+                    {suggestions.length > 0 && (
                         <>
                             <h5 className={styles.suggestionLabel}>
                                 Title suggestions:
                             </h5>
                             <div className={styles.suggestions}>
-                                {(title !== suggestedTitleFromUrl) && (
+                                {suggestions.map(suggestion => (
                                     <BadgeInput
+                                        key={suggestion}
                                         className={styles.suggestionBadge}
                                         faramElementName="title"
-                                        title={suggestedTitleFromUrl}
+                                        title={suggestion}
                                     />
-                                )}
-                                {(title !== suggestedTitleFromExtraction) && (
-                                    <BadgeInput
-                                        className={styles.suggestionBadge}
-                                        faramElementName="title"
-                                        title={suggestedTitleFromExtraction}
-                                    />
-                                )}
+                                ))}
                             </div>
                         </>
                     )}
