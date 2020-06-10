@@ -18,15 +18,53 @@
 
     .input-button-group {
         display: flex;
+        align-items: center;
         flex-direction: row;
 
         .input {
             flex-grow: 1;
         }
+
         .buttons {
             display: flex;
             flex-shrink: 0;
             margin-left: var(--spacing-small);
+
+            .small-button {
+                margin-right: var(--spacing-extra-small);
+                padding: var(--spacing-extra-small);
+                text-transform: capitalize;
+                text-decoration: underline;
+                font-size: var(--font-size-extra-small);
+            }
+        }
+    }
+
+    .title-group {
+        margin-bottom: var(--spacing-extra-small);
+    }
+
+    .suggestion-label {
+        margin: var(--spacing-extra-small) 0;
+        text-transform: initial;
+        color: var(--color-text-label);
+        font-size: var(--font-size-small);
+    }
+
+    .suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin: var(--spacing-extra-small) 0;
+
+        .suggestion-badge {
+            display: block;
+            flex-basis: calc(50% - var(--spacing-extra-small));
+            margin-right: var(--spacing-extra-small);
+            overflow: hidden;
+            text-align: left;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     }
 

@@ -8,6 +8,10 @@ export const apiServerAddressSelector = ({ settings }) => (
     settings.apiServerAddress || ''
 );
 
+export const serverlessAddressSelector = ({ settings }) => (
+    settings.serverlessAddress || ''
+);
+
 export const serverSelector = ({ settings }) => (
     settings.server || ''
 );
@@ -15,10 +19,12 @@ export const serverSelector = ({ settings }) => (
 export const serverAddressSelector = createSelector(
     webServerAddressSelector,
     apiServerAddressSelector,
+    serverlessAddressSelector,
     serverSelector,
-    (web, api, server) => ({
+    (web, api, serverless, server) => ({
         web,
         api,
+        serverless,
         server,
     }),
 );

@@ -20,7 +20,7 @@ export default class Root extends React.PureComponent {
         console.info('React version:', React.version);
     }
 
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         const afterRehydrateCallback = () => this.setState({ rehydrated: true });
         persistStore(this.store, undefined, afterRehydrateCallback);
     }

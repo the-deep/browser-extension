@@ -4,7 +4,7 @@ import { methods } from '#request';
 
 // TODO: block if failure for projectsListRequest and leadOptionsRequest
 
-const requests = {
+const requestOptions = {
     projectsListRequest: {
         url: '/projects/member-of/',
         query: {
@@ -23,18 +23,62 @@ const requests = {
         },
     },
     webInfoRequest: {
-        url: '/v2/web-info-extract/',
-        body: ({ props: { currentTabId } }) => ({ url: currentTabId }),
-        method: methods.POST,
-        onSuccess: ({ params, response }) => {
-            params.handleWebInfoFill(response);
-        },
-        extras: {
-            schemaName: 'webInfo',
-        },
-
+        url: '/web-info-extract/',
+        query: ({ props: { currentTabId } }) => ({ url: currentTabId }),
+        method: methods.GET,
         onMount: ({ props: { currentTabId } }) => currentTabId && currentTabId.length > 0,
         onPropsChanged: ['currentTabId'],
+        onSuccess: ({ props: { requests, currentTabId }, response }) => {
+            if (requests.webInfoDataRequest) {
+                requests.webInfoDataRequest.do({
+                    url: currentTabId,
+                    title: response.title,
+                    date: response.date,
+                    website: response.website,
+                    country: response.country,
+                    source: response.sourceRaw,
+                    author: response.authorRaw,
+                });
+            }
+        },
+        extras: {
+            type: 'serverless',
+            // schemaName: 'webInfo',
+        },
+    },
+
+    webInfoDataRequest: {
+        url: '/v2/web-info-data/',
+        body: ({ params: {
+            source,
+            author,
+            country,
+            url,
+        } }) => ({
+            sourceRaw: source,
+            authorRaw: author,
+            country,
+            url,
+        }),
+        method: methods.POST,
+        onSuccess: ({ params, response }) => {
+            params.handleWebInfoFill({
+                date: params.date,
+                website: params.website,
+                title: params.title,
+                url: params.url,
+                ...response,
+            });
+        },
+        onFailure: ({ params }) => {
+            // NOTE: Even on failure fill data from webInfoExtract
+            params.handleWebInfoFill({
+                date: params.date,
+                website: params.website,
+                title: params.title,
+                url: params.url,
+            });
+        },
     },
 
     leadOptionsRequest: {
@@ -124,4 +168,4 @@ const requests = {
     },
 };
 
-export default requests;
+export default requestOptions;
