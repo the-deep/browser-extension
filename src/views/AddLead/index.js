@@ -25,6 +25,7 @@ import MultiSelectInput from '#rsci/MultiSelectInput';
 import NonFieldErrors from '#rsci/NonFieldErrors';
 import SelectInput from '#rsci/SelectInput';
 import TextInput from '#rsci/TextInput';
+import TextArea from '#rsci/TextArea';
 import LoadingAnimation from '#rscv/LoadingAnimation';
 import BasicSelectInput from '#rsu/../v2/Input/BasicSelectInput';
 
@@ -520,6 +521,7 @@ class AddLead extends React.PureComponent {
                     disabled={pending}
                 >
                     <NonFieldErrors
+                        className={styles.nonFieldError}
                         faramElement
                         persistent={false}
                     />
@@ -530,26 +532,10 @@ class AddLead extends React.PureComponent {
                         keySelector={projectKeySelector}
                         labelSelector={projectLabelSelector}
                     />
-                    <div className={_cs(styles.inputButtonGroup, styles.titleGroup)}>
-                        <TextInput
-                            className={styles.input}
-                            faramElementName="title"
-                            label={titleInputLabel}
-                        />
-                        <div className={styles.buttons}>
-                            <AccentButton
-                                className={styles.smallButton}
-                                title="Format"
-                                onClick={this.handleAutoFormatTitleButton}
-                            >
-                                Aa
-                            </AccentButton>
-                        </div>
-                    </div>
                     {suggestions.length > 0 && (
                         <>
                             <h5 className={styles.suggestionLabel}>
-                                Title suggestions:
+                                Suggestions:
                             </h5>
                             <div className={styles.suggestions}>
                                 {suggestions.map(suggestion => (
@@ -563,6 +549,23 @@ class AddLead extends React.PureComponent {
                             </div>
                         </>
                     )}
+                    <div className={_cs(styles.inputButtonGroup, styles.titleGroup)}>
+                        <TextArea
+                            className={styles.input}
+                            faramElementName="title"
+                            label={titleInputLabel}
+                            rows={2}
+                        />
+                        <div className={styles.buttons}>
+                            <AccentButton
+                                className={styles.smallButton}
+                                title="Format"
+                                onClick={this.handleAutoFormatTitleButton}
+                            >
+                                Aa
+                            </AccentButton>
+                        </div>
+                    </div>
                     <div className={styles.inputButtonGroup}>
                         <FaramBasicSelectInput
                             className={styles.input}

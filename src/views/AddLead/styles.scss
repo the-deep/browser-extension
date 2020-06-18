@@ -8,11 +8,20 @@
 
     .inputs {
         flex-grow: 1;
-        padding: var(--spacing-extra-small) var(--spacing-large);
+        padding: 0 var(--spacing-large);
         overflow-y: auto;
 
+        .non-field-error {
+            display: flex;
+            flex-direction: column;
+
+            >* {
+                padding: var(--spacing-extra-small);
+            }
+        }
+
         >* {
-            margin: var(--spacing-small-alt) 0;
+            margin: var(--spacing-small) 0;
         }
     }
 
@@ -41,7 +50,7 @@
     }
 
     .title-group {
-        margin-bottom: var(--spacing-extra-small);
+        margin-top: var(--spacing-extra-small-alt);
     }
 
     .suggestion-label {
