@@ -1,5 +1,5 @@
 const styleProperties = {
-    widthApp: '400px',
+    widthApp: '512px',
     heightApp: '600px',
 };
 
