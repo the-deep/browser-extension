@@ -2,16 +2,20 @@
     "manifest_version": 2,
     "name": "DEEP-2: Add Lead",
     "short_name": "DEEP Extension",
-    "version": "1.25",
+    "version": "1.26",
 
     "description": "Browser Extension for DEEP",
     "icons": {
-        "192": "deep-logo.png"
+        "32": "deep-logo-32.png",
+        "64": "deep-logo-64.png",
+        "128": "deep-logo-128.png"
     },
 
     "browser_action": {
         "default_icon": {
-            "192": "deep-logo.png"
+            "32": "deep-logo-32.png",
+            "64": "deep-logo-64.png",
+            "128": "deep-logo-128.png"
         },
         "default_popup": "index.html",
         "default_title": "DEEP Extension"
