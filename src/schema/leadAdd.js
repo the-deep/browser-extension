@@ -184,10 +184,12 @@ const leadAddSchema = [];
             publishedOn: { type: 'string' },
             source: { type: 'uint' }, // url
             author: { type: 'uint' }, // url
+            authors: { type: 'array.uint' }, // url
             sourceRaw: { type: 'string' }, // url
             authorRaw: { type: 'string' }, // url
             sourceDetail: { type: 'unknown' },
             authorDetail: { type: 'unknown' },
+            authorsDetail: { type: 'array.unknown' },
             status: { type: 'string', required: true },
             text: { type: 'string' },
             title: { type: 'string', required: true },

@@ -28,6 +28,7 @@ import TextInput from '#rsci/TextInput';
 import TextArea from '#rsci/TextArea';
 import LoadingAnimation from '#rscv/LoadingAnimation';
 import BasicSelectInput from '#rsu/../v2/Input/BasicSelectInput';
+import BasicMultiSelectInput from '#rsu/../v2/Input/BasicMultiSelectInput';
 
 import {
     RequestCoordinator,
@@ -57,6 +58,7 @@ import requests from './requests';
 import styles from './styles.scss';
 
 const FaramBasicSelectInput = FaramInputElement(BasicSelectInput);
+const FaramBasicMultiSelectInput = FaramInputElement(BasicMultiSelectInput);
 
 const submitButtonTitle = 'submit';
 const websiteInputLabel = 'Website';
@@ -169,7 +171,7 @@ class AddLead extends React.PureComponent {
                 project: [requiredCondition],
                 title: [requiredCondition],
                 source: [requiredCondition],
-                author: [],
+                authors: [],
                 confidentiality: [requiredCondition],
                 assignee: [requiredCondition],
                 publishedOn: [requiredCondition],
@@ -327,7 +329,7 @@ class AddLead extends React.PureComponent {
             tabId: currentTabId,
             values: {
                 ...inputValues,
-                author: inputValues.source,
+                authors: isDefined(inputValues.source) ? [inputValues.source] : undefined,
             },
         });
     }
@@ -592,9 +594,9 @@ class AddLead extends React.PureComponent {
                         </div>
                     </div>
                     <div className={styles.inputButtonGroup}>
-                        <FaramBasicSelectInput
+                        <FaramBasicMultiSelectInput
                             className={styles.input}
-                            faramElementName="author"
+                            faramElementName="authors"
                             label={authorInputLabel}
                             options={organizations}
                             keySelector={organizationKeySelector}
