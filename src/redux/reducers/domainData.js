@@ -1,3 +1,4 @@
+import produce from 'immer';
 import update from '../../vendor/react-store/utils/immutable-update';
 import createReducerWithMap from '../../utils/createReducerWithMap';
 import initialDomainDataState from '../initial-state/domainData';
@@ -5,7 +6,8 @@ import initialDomainDataState from '../initial-state/domainData';
 // TYPE
 
 export const UPDATE_INPUT_VALUES_ACTION = 'extension/UPDATE_INPUT_VALUES';
-export const CLEAR_INPUT_VALUE_ACTION = 'extension/CLEAR_INPUT_VALUES';
+export const CLEAR_TABID_DATA_ACTION = 'extension/CLEAR_TABID_DATA';
+export const SET_ORGANIZATIONS_ACTION = 'extension/SET_ORGANIZATIONS';
 export const CLEAR_DOMAIN_DATA_ACTION = 'extension/CLEAR_DOMAIN_DATA';
 
 // ACTION-CREATOR
@@ -16,9 +18,15 @@ export const updateInputValuesAction = ({ tabId, values }) => ({
     values,
 });
 
-export const clearInputValueAction = ({ tabId }) => ({
-    type: CLEAR_INPUT_VALUE_ACTION,
+export const clearTabIdDataAction = ({ tabId }) => ({
+    type: CLEAR_TABID_DATA_ACTION,
     tabId,
+});
+
+export const setOrganizationsAction = ({ tabId, organizations }) => ({
+    type: SET_ORGANIZATIONS_ACTION,
+    tabId,
+    organizations,
 });
 
 export const clearDomainDataAction = () => ({
@@ -32,14 +40,16 @@ const clearDomainData = () => {
     return initialDomainDataState;
 };
 
-const clearInputValue = (state, action) => {
+const clearTabIdData = (state, action) => {
     const { tabId } = action;
 
-    const settings = {
-        [tabId]: { $set: undefined },
-    };
+    const newState = produce(state, (safeState) => {
+        if (safeState[tabId]) {
+            // eslint-disable-next-line no-param-reassign
+            delete safeState[tabId];
+        }
+    });
 
-    const newState = update(state, settings);
     return newState;
 };
 
@@ -61,9 +71,28 @@ const updateInputValues = (state, action) => {
     return newState;
 };
 
+const setOrganizations = (state, action) => {
+    const {
+        tabId,
+        organizations,
+    } = action;
+
+    const newState = produce(state, (safeState) => {
+        if (!safeState[tabId]) {
+            // eslint-disable-next-line no-param-reassign
+            safeState[tabId] = {};
+        }
+        // eslint-disable-next-line no-param-reassign
+        safeState[tabId].organizations = organizations;
+    });
+
+    return newState;
+};
+
 export const domainDataReducers = {
     [UPDATE_INPUT_VALUES_ACTION]: updateInputValues,
-    [CLEAR_INPUT_VALUE_ACTION]: clearInputValue,
+    [CLEAR_TABID_DATA_ACTION]: clearTabIdData,
+    [SET_ORGANIZATIONS_ACTION]: setOrganizations,
     [CLEAR_DOMAIN_DATA_ACTION]: clearDomainData,
 };
 
