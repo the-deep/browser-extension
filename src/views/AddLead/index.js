@@ -37,8 +37,10 @@ import {
 
 import {
     updateInputValuesAction,
-    clearInputValueAction,
+    setOrganizationsAction,
+    clearTabIdDataAction,
     inputValuesForTabSelector,
+    organizationsForTabSelector,
     currentTabIdSelector,
     currentUserIdSelector,
     webServerAddressSelector,
@@ -77,7 +79,9 @@ const propTypes = {
     inputValues: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
     currentTabId: PropTypes.string.isRequired,
     updateInputValues: PropTypes.func.isRequired,
-    clearInputValue: PropTypes.func.isRequired,
+    clearTabIdData: PropTypes.func.isRequired,
+    setOrganizations: PropTypes.func.isRequired,
+    organizations: PropTypes.array, // eslint-disable-line react/forbid-prop-types
     currentUserId: PropTypes.number,
     requests: PropTypes.shape({
         webInfoRequest: PropTypes.object.isRequired,
@@ -98,10 +102,12 @@ const propTypes = {
 const defaultProps = {
     className: undefined,
     currentUserId: undefined,
+    organizations: [],
 };
 
 const mapStateToProps = state => ({
     inputValues: inputValuesForTabSelector(state),
+    organizations: organizationsForTabSelector(state),
     currentTabId: currentTabIdSelector(state),
     currentUserId: currentUserIdSelector(state),
     webServerAddress: webServerAddressSelector(state),
@@ -109,7 +115,8 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     updateInputValues: params => dispatch(updateInputValuesAction(params)),
-    clearInputValue: params => dispatch(clearInputValueAction(params)),
+    clearTabIdData: params => dispatch(clearTabIdDataAction(params)),
+    setOrganizations: params => dispatch(setOrganizationsAction(params)),
 });
 
 function mergeLists(foo, bar) {
@@ -160,8 +167,6 @@ class AddLead extends React.PureComponent {
             suggestedTitleFromExtraction: undefined,
 
             searchedOrganizations: [],
-            // Organizations filled by web-info-extract and lead-options
-            organizations: [],
 
             faramErrors: {},
         };
@@ -194,7 +199,10 @@ class AddLead extends React.PureComponent {
             updateInputValues,
             currentTabId,
             inputValues,
+            organizations,
+            setOrganizations,
         } = this.props;
+
         const navState = getNavState();
         if (navState) {
             const {
@@ -209,18 +217,15 @@ class AddLead extends React.PureComponent {
                 values: fillOrganization(inputValues, organizationField, organization),
             });
 
-            this.setState(state => ({
-                organizations: mergeLists(state.organizations, [organization]),
-            }));
+            setOrganizations({
+                tabId: currentTabId,
+                organizations: mergeLists(organizations, [organization]),
+            });
         }
     }
 
     setSearchedOrganizations = (searchedOrganizations) => {
         this.setState({ searchedOrganizations });
-    }
-
-    setOrganizations = (organizations) => {
-        this.setState({ organizations });
     }
 
     handleOrganizationSearchValueChange = (searchText) => {
@@ -275,14 +280,19 @@ class AddLead extends React.PureComponent {
             currentUserId,
             inputValues,
             updateInputValues,
+            organizations,
+            setOrganizations,
         } = this.props;
 
-        const { organizations } = leadOptions;
+        const {
+            organizations: organizationsFromLeadOptions,
+        } = leadOptions;
 
-        if (organizations.length > 0) {
-            this.setState(state => ({
-                organizations: mergeLists(state.organizations, organizations),
-            }));
+        if (organizationsFromLeadOptions.length > 0) {
+            setOrganizations({
+                tabId: currentTabId,
+                organizations: mergeLists(organizations, organizationsFromLeadOptions),
+            });
         }
 
         updateInputValues({
@@ -296,6 +306,8 @@ class AddLead extends React.PureComponent {
             currentTabId,
             inputValues,
             updateInputValues,
+            organizations: organizationsFromProps,
+            setOrganizations,
         } = this.props;
 
         const newOrgs = [];
@@ -306,9 +318,10 @@ class AddLead extends React.PureComponent {
             newOrgs.push(webInfo.author);
         }
         if (newOrgs.length > 0) {
-            this.setState(state => ({
-                organizations: mergeLists(state.organizations, newOrgs),
-            }));
+            setOrganizations({
+                tabId: currentTabId,
+                organizations: mergeLists(organizationsFromProps, newOrgs),
+            });
         }
         this.setState({ suggestedTitleFromExtraction: webInfo.title });
 
@@ -371,14 +384,16 @@ class AddLead extends React.PureComponent {
         targetUrl,
         tabId,
     }) => {
-        const { clearInputValue } = this.props;
+        const {
+            clearTabIdData,
+        } = this.props;
 
         this.setState({
             leadSubmitted: true,
             targetUrl,
         });
 
-        clearInputValue(tabId);
+        clearTabIdData(tabId);
     }
 
     handleLeadCreationFailure = (faramErrors) => {
@@ -434,7 +449,6 @@ class AddLead extends React.PureComponent {
     render() {
         const {
             searchedOrganizations,
-            organizations,
 
             leadSubmitted,
             targetUrl,
@@ -447,6 +461,8 @@ class AddLead extends React.PureComponent {
         const {
             inputValues,
             className,
+            setOrganizations,
+            organizations,
             requests: {
                 webInfoRequest: {
                     pending: pendingWebInfo,
@@ -581,7 +597,7 @@ class AddLead extends React.PureComponent {
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
-                            onOptionsChange={this.setOrganizations}
+                            onOptionsChange={setOrganizations}
                             onSearchValueChange={this.handleOrganizationSearchValueChange}
                         />
                         <div className={styles.buttons}>
@@ -606,7 +622,7 @@ class AddLead extends React.PureComponent {
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
-                            onOptionsChange={this.setOrganizations}
+                            onOptionsChange={setOrganizations}
                             onSearchValueChange={this.handleOrganizationSearchValueChange}
                         />
                         <div className={styles.buttons}>

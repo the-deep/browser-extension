@@ -26,7 +26,21 @@ const requestOptions = {
         url: '/web-info-extract/',
         query: ({ props: { currentTabId } }) => ({ url: currentTabId }),
         method: methods.GET,
-        onMount: ({ props: { currentTabId } }) => currentTabId && currentTabId.length > 0,
+        onMount: ({
+            props: {
+                currentTabId,
+                getNavState,
+            },
+        }) => {
+            const navState = getNavState();
+            // NOTE: If we come from another page navState is present
+            // When navState is present we don't want to call this api again
+            // and reset the data
+            if (isDefined(navState)) {
+                return false;
+            }
+            return currentTabId && currentTabId.length > 0;
+        },
         onPropsChanged: ['currentTabId'],
         onSuccess: ({ props: { requests, currentTabId }, response }) => {
             if (requests.webInfoDataRequest) {
