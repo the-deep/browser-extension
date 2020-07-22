@@ -1,6 +1,7 @@
 import {
     listToMap,
     isNotDefined,
+    isDefined,
     isFalsyString,
 } from '@togglecorp/fujs';
 import {
@@ -9,10 +10,18 @@ import {
 } from '@togglecorp/faram';
 
 export function fillOrganization(inputValues, organizationField, organization) {
-    const values = { ...inputValues };
     const organizationId = organization.id;
+    if (!organizationId) {
+        return inputValues;
+    }
+
+    const values = { ...inputValues };
     if (organizationField === 'author') {
-        values.author = organizationId;
+        if (isDefined(values.authors)) {
+            values.authors = [...values.authors, organizationId];
+        } else {
+            values.authors = [organizationId];
+        }
     } else if (organizationField === 'publisher') {
         values.source = organizationId;
     }
@@ -67,7 +76,7 @@ export function fillWebInfo(inputValues, webInfo) {
         values.source = webInfo.source.id;
     }
     if (webInfo.author) {
-        values.author = webInfo.author.id;
+        values.authors = [webInfo.author.id];
     }
     return values;
 }
