@@ -26,6 +26,7 @@ import NonFieldErrors from '#rsci/NonFieldErrors';
 import SelectInput from '#rsci/SelectInput';
 import TextInput from '#rsci/TextInput';
 import TextArea from '#rsci/TextArea';
+import SegmentInput from '#rsci/SegmentInput';
 import LoadingAnimation from '#rscv/LoadingAnimation';
 import BasicSelectInput from '#rsu/../v2/Input/BasicSelectInput';
 import BasicMultiSelectInput from '#rsu/../v2/Input/BasicMultiSelectInput';
@@ -34,6 +35,7 @@ import {
     RequestCoordinator,
     createRequestClient,
 } from '#request';
+
 
 import {
     updateInputValuesAction,
@@ -68,6 +70,7 @@ const urlInputLabel = 'Url';
 const publishedOnInputLabel = 'Published on';
 const assigneeInputLabel = 'Assignee';
 const confidentialityInputLabel = 'Confidentiality';
+const priorityInputLabel = 'Priority';
 const sourceInputLabel = 'Publishing Organization';
 const authorInputLabel = 'Authoring Organization';
 const titleInputLabel = 'Title';
@@ -129,6 +132,24 @@ function mergeLists(foo, bar) {
     );
 }
 
+const prioritySelect = [
+    {
+        key: 'low',
+        value: 'Low',
+    },
+    {
+        key: 'medium',
+        value: 'Medium',
+    },
+    {
+        key: 'high',
+        value: 'High',
+    },
+];
+
+const priorityKeySelector = item => item.key;
+const priorityLabelSelector = item => item.value;
+
 const memberKeySelector = d => d.id;
 const memberLabelSelector = d => d.displayName;
 const confidentialityKeySelector = d => d.key;
@@ -178,6 +199,7 @@ class AddLead extends React.PureComponent {
                 source: [requiredCondition],
                 authors: [],
                 confidentiality: [requiredCondition],
+                priority: [requiredCondition],
                 assignee: [requiredCondition],
                 publishedOn: [requiredCondition],
                 url: [requiredCondition, urlCondition],
@@ -640,14 +662,27 @@ class AddLead extends React.PureComponent {
                             />
                         </div>
                     </div>
-                    <SelectInput
-                        faramElementName="confidentiality"
-                        label={confidentialityInputLabel}
-                        options={isProjectSelected ? confidentiality : undefined}
-                        keySelector={confidentialityKeySelector}
-                        labelSelector={confidentialityLabelSelector}
-                        disabled={pendingLeadOptions || pending || !isProjectSelected}
-                    />
+                    <div className={styles.inlineGroup}>
+                        <SelectInput
+                            faramElementName="confidentiality"
+                            label={confidentialityInputLabel}
+                            options={isProjectSelected ? confidentiality : undefined}
+                            keySelector={confidentialityKeySelector}
+                            labelSelector={confidentialityLabelSelector}
+                            disabled={pendingLeadOptions || pending || !isProjectSelected}
+                            className={styles.confidentiality}
+                        />
+
+                        <SegmentInput
+                            faramElementName="priority"
+                            name="priority-selector"
+                            label={priorityInputLabel}
+                            labelSelector={priorityLabelSelector}
+                            keySelector={priorityKeySelector}
+                            options={prioritySelect}
+                            className={styles.priority}
+                        />
+                    </div>
                     <SelectInput
                         faramElementName="assignee"
                         label={assigneeInputLabel}

@@ -49,6 +49,21 @@
         }
     }
 
+    .inline-group {
+        display: flex;
+        justify-content: space-between;
+
+        .confidentiality{
+            flex-grow: 1;
+            margin-right: var(--spacing-large);
+        }
+
+        .priority {
+            flex-shrink: 0;
+        }
+
+    }
+
     .title-group {
         margin-top: var(--spacing-extra-small-alt);
     }
