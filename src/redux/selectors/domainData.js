@@ -11,7 +11,10 @@ export const inputValuesForTabSelector = ({ domainData, mem }) => {
         const tabData = domainData[currentTabId];
 
         if (tabData) {
-            return tabData.inputValues || emptyObject;
+            return tabData.inputValues || {
+                authors: [],
+                priority: 'low',
+            };
         }
     }
 

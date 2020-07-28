@@ -268,6 +268,18 @@ class AddLead extends React.PureComponent {
         }
     }
 
+    handleOrganizationsSetFromInput = (organizations) => {
+        const {
+            currentTabId,
+            setOrganizations,
+        } = this.props;
+
+        setOrganizations({
+            tabId: currentTabId,
+            organizations,
+        });
+    }
+
     handleAutoFormatTitleButton = () => {
         const {
             currentTabId,
@@ -468,6 +480,7 @@ class AddLead extends React.PureComponent {
         goToAddOrganization();
     }
 
+
     render() {
         const {
             searchedOrganizations,
@@ -619,7 +632,7 @@ class AddLead extends React.PureComponent {
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
-                            onOptionsChange={setOrganizations}
+                            onOptionsChange={this.handleOrganizationsSetFromInput}
                             onSearchValueChange={this.handleOrganizationSearchValueChange}
                         />
                         <div className={styles.buttons}>
@@ -644,7 +657,7 @@ class AddLead extends React.PureComponent {
 
                             searchOptions={searchedOrganizations}
                             searchOptionsPending={pendingSearchedOrganizations}
-                            onOptionsChange={setOrganizations}
+                            onOptionsChange={this.handleOrganizationsSetFromInput}
                             onSearchValueChange={this.handleOrganizationSearchValueChange}
                         />
                         <div className={styles.buttons}>
