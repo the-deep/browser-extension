@@ -164,7 +164,7 @@ const requestOptions = {
                 const [firstResponse] = response;
                 const submittedLeadId = firstResponse.id;
                 const submittedProjectId = firstResponse.project;
-                targetUrl = `${webServerAddress}/projects/${submittedProjectId}/leads/${submittedLeadId}/edit-entries/`;
+                targetUrl = `${webServerAddress}/projects/${submittedProjectId}/leads/${submittedLeadId}/entries/edit/`;
             }
 
             params.handleLeadCreationSuccess({

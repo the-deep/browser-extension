@@ -78,6 +78,7 @@ export function fillWebInfo(inputValues, webInfo) {
     if (webInfo.author) {
         values.authors = [webInfo.author.id];
     }
+    values.priority = 'low';
     return values;
 }
 export function isUrlValid(url) {
