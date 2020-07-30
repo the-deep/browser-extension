@@ -2,14 +2,17 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import produce from 'immer';
 import titleCase from 'title';
+import memoize from 'memoize-one';
 
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import {
     _cs,
     isFalsyString,
+    compareNumber,
     isDefined,
     unique,
+    isNotDefined,
 } from '@togglecorp/fujs';
 import Faram, {
     requiredCondition,
@@ -132,21 +135,6 @@ function mergeLists(foo, bar) {
     );
 }
 
-const prioritySelect = [
-    {
-        key: 'low',
-        value: 'Low',
-    },
-    {
-        key: 'medium',
-        value: 'Medium',
-    },
-    {
-        key: 'high',
-        value: 'High',
-    },
-];
-
 const priorityKeySelector = item => item.key;
 const priorityLabelSelector = item => item.value;
 
@@ -245,6 +233,13 @@ class AddLead extends React.PureComponent {
             });
         }
     }
+
+    getPriorityOptions = memoize((priority, isProjectSelected) => {
+        if (!isProjectSelected || isNotDefined(priority)) {
+            return undefined;
+        }
+        return [...priority].sort((a, b) => compareNumber(a.key, b.key));
+    });
 
     setSearchedOrganizations = (searchedOrganizations) => {
         this.setState({ searchedOrganizations });
@@ -522,6 +517,7 @@ class AddLead extends React.PureComponent {
                     response: {
                         members,
                         confidentiality,
+                        priority,
                     } = {},
                 },
 
@@ -557,6 +553,8 @@ class AddLead extends React.PureComponent {
         const suggestions = unique([suggestedTitleFromUrl, suggestedTitleFromExtraction])
             .filter(isDefined)
             .filter(suggestion => suggestion !== title);
+
+        const priorityOptions = this.getPriorityOptions(priority, isProjectSelected);
 
         return (
             <div className={_cs(styles.addLead, className)}>
@@ -690,9 +688,9 @@ class AddLead extends React.PureComponent {
                             faramElementName="priority"
                             name="priority-selector"
                             label={priorityInputLabel}
+                            options={priorityOptions}
                             labelSelector={priorityLabelSelector}
                             keySelector={priorityKeySelector}
-                            options={prioritySelect}
                             className={styles.priority}
                         />
                     </div>

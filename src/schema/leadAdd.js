@@ -16,6 +16,21 @@ const leadAddSchema = [];
 }
 
 {
+    const name = 'keyValueNS';
+    const schema = {
+        doc: {
+            name: 'keyValueNS',
+            description: 'Schema for key as number and value as string',
+        },
+        fields: {
+            key: { type: 'number' },
+            value: { type: 'string' },
+        },
+    };
+    leadAddSchema.push({ name, schema });
+}
+
+{
     const name = 'confidentiality';
     const schema = {
         doc: {
@@ -127,6 +142,7 @@ const leadAddSchema = [];
                 type: 'array.organization',
             },
             confidentiality: { type: 'array.confidentiality' },
+            priority: { type: 'array.keyValueNS' },
         },
     };
     leadAddSchema.push({ name, schema });
