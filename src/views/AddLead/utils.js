@@ -57,7 +57,9 @@ export function fillExtraInfo(inputValues, currentUserId, leadOptions = {}) {
         && leadOptions.priority
         && leadOptions.priority.length > 0
     ) {
-        const sortedPriority = leadOptions.priority.sort((a, b) => compareNumber(a.key, b.key));
+        const sortedPriority = [...leadOptions.priority].sort(
+            (a, b) => compareNumber(a.key, b.key),
+        );
         values.priority = sortedPriority[0].key;
     }
 
