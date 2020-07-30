@@ -2,6 +2,7 @@ import {
     listToMap,
     isNotDefined,
     isDefined,
+    compareNumber,
     isFalsyString,
 } from '@togglecorp/fujs';
 import {
@@ -51,6 +52,14 @@ export function fillExtraInfo(inputValues, currentUserId, leadOptions = {}) {
     ) {
         values.confidentiality = leadOptions.confidentiality[0].key;
     }
+    if (
+        !values.priority
+        && leadOptions.priority
+        && leadOptions.priority.length > 0
+    ) {
+        const sortedPriority = leadOptions.priority.sort((a, b) => compareNumber(a.key, b.key));
+        values.priority = sortedPriority[0].key;
+    }
 
     return values;
 }
@@ -78,7 +87,6 @@ export function fillWebInfo(inputValues, webInfo) {
     if (webInfo.author) {
         values.authors = [webInfo.author.id];
     }
-    values.priority = 'low';
     return values;
 }
 export function isUrlValid(url) {

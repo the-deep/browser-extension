@@ -1,7 +1,9 @@
 // import { createSelector } from 'reselect';
 
 // NOTE: Use these to make sure reference don't change
-const emptyObject = {};
+const emptyInputValues = {
+    authors: [],
+};
 const emptyList = [];
 
 export const inputValuesForTabSelector = ({ domainData, mem }) => {
@@ -11,14 +13,11 @@ export const inputValuesForTabSelector = ({ domainData, mem }) => {
         const tabData = domainData[currentTabId];
 
         if (tabData) {
-            return tabData.inputValues || {
-                authors: [],
-                priority: 'low',
-            };
+            return tabData.inputValues || emptyInputValues;
         }
     }
 
-    return emptyObject;
+    return emptyInputValues;
 };
 
 export const organizationsForTabSelector = ({ domainData, mem }) => {
