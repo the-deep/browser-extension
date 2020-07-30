@@ -46,15 +46,15 @@ export function fillExtraInfo(inputValues, currentUserId, leadOptions = {}) {
     }
 
     if (
-        !values.confidentiality
-        && leadOptions.confidentiality
+        isNotDefined(values.confidentiality)
+        && isDefined(leadOptions.confidentiality)
         && leadOptions.confidentiality.length > 0
     ) {
         values.confidentiality = leadOptions.confidentiality[0].key;
     }
     if (
-        !values.priority
-        && leadOptions.priority
+        isNotDefined(values.priority)
+        && isDefined(leadOptions.priority)
         && leadOptions.priority.length > 0
     ) {
         const sortedPriority = [...leadOptions.priority].sort(
